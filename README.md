@@ -33,7 +33,8 @@ TODO
   - [X] Handle two ways of specifying credentials (basic auth and connection string)
   - [ ] Add a form to specify the MongoDB server to connect to
   - [ ] Handle remembering credentials
-  - [ ] Use a button to start Mongo Express and navigate to it
+  - [ ] Add a way to reset saved credentials
+  - [ ] Use a button to start Mongo Express, hang on loading screen until it's ready, and navigate to it
 - [ ] Add screenshots to README.md
 - [ ] Add usage instructions to README.md
 - [ ] Add changelog to README.md
