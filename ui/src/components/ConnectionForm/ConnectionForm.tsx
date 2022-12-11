@@ -1,11 +1,12 @@
 import mongoExpressLogo from '../../assets/mongo-express-logo.png';
-import {ExtensionConfig} from "../../types/ExtensionConfig";
-import React, {Dispatch, SetStateAction} from "react";
+import { MongoDbConfig } from "../../types/MongoDbConfig";
+import React, { Dispatch, SetStateAction } from "react";
 import {
   Avatar,
   Box,
   Checkbox,
   FormControlLabel,
+  Grid,
   Link,
   Radio,
   RadioGroup,
@@ -13,18 +14,41 @@ import {
   TextField,
   Typography
 } from "@mui/material";
-import {AUTH_BASIC} from "../../utils/constants";
+import OpenInNewIcon from '@mui/icons-material/OpenInNew';
+import { AUTH_BASIC } from "../../utils/constants";
+import { ddClient, ddToast } from "../../api/utils";
+import { ResetConfig } from '../../utils/config';
 
 export const ConnectionForm = (
-  extensionConfig: ExtensionConfig,
-  setExtensionConfig: Dispatch<SetStateAction<ExtensionConfig>>,
+  extensionConfig: MongoDbConfig,
+  setExtensionConfig: Dispatch<SetStateAction<MongoDbConfig>>,
   isButtonLoading?: boolean
 ) => {
+  const handleResetCredentials = () => {
+    ResetConfig()
+      .then((config) => {
+        setExtensionConfig(config);
+        ddToast.success('Credentials reset.');
+      })
+      .catch((error) => {
+        ddToast.error(error.toString());
+      });
+  };
+
   return (
     <>
       <Avatar sx={{ m: 1, width: 60, height: 60 }} alt="Mongo Express Logo" src={mongoExpressLogo} />
       <Typography variant="h5">Connect to MongoDB</Typography>
+      <Link
+        href="#"
+        onClick={() => ddClient?.host?.openExternal('https://www.mongodb.com/docs/manual/reference/connection-string/')}
+        variant="body2"
+      >
+        {"Get help connecting to MongoDB "}
+        <OpenInNewIcon fontSize="inherit" />
+      </Link>
       <RadioGroup
+        sx={{ mt: 2 }}
         aria-disabled
         row
         value={extensionConfig.authMethod ?? 'basic'}
@@ -58,18 +82,6 @@ export const ConnectionForm = (
           label="Connection String"
         />
       </RadioGroup>
-      {/*<Grid container>*/}
-      {/*  <Grid item xs>*/}
-      <Link href="#" variant="body2">
-        Get help connecting to MongoDB
-      </Link>
-      {/*  </Grid>*/}
-      {/*  <Grid item>*/}
-      {/*    <Link href="#" variant="body2">*/}
-      {/*      {"Don't have an account? Sign Up"}*/}
-      {/*    </Link>*/}
-      {/*  </Grid>*/}
-      {/*</Grid>*/}
       {extensionConfig.authMethod === AUTH_BASIC ? (
         <Box>
           <Stack direction="row" alignItems="start" spacing={0}>
@@ -142,15 +154,28 @@ export const ConnectionForm = (
           />
         </>
       )}
-      <FormControlLabel
-        disabled={isButtonLoading}
-        label="Remember this connection"
-        control={<Checkbox
-          color="primary"
-          checked={extensionConfig.rememberCredentials ?? false}
-          onChange={(e: any) => setExtensionConfig({ ...extensionConfig, rememberCredentials: e.target.checked })}
-        />}
-      />
+      <Grid container>
+        <Grid item xs>
+          <FormControlLabel
+            disabled={isButtonLoading}
+            label="Remember this connection"
+            control={<Checkbox
+              color="primary"
+              checked={extensionConfig.rememberCredentials ?? false}
+              onChange={(e: any) => setExtensionConfig({ ...extensionConfig, rememberCredentials: e.target.checked })}
+            />}
+          />
+        </Grid>
+        <Grid item>
+          <Link
+            href="#"
+            onClick={handleResetCredentials}
+            variant="body2"
+          >
+            {"Reset saved credentials"}
+          </Link>
+        </Grid>
+      </Grid>
     </>
   );
 };

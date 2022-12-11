@@ -36,6 +36,6 @@ LABEL org.opencontainers.image.title="Mongo Express Docker Extension" \
 COPY --from=builder /backend/bin/service /
 COPY docker-compose.yaml .
 COPY metadata.json .
-COPY docker.svg .
+COPY mongo-express-logo.svg .
 COPY --from=client-builder /ui/build ui
 CMD /service -socket /run/guest-services/extension-mongo-express-docker-extension.sock

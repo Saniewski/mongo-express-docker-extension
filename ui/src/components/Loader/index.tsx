@@ -17,7 +17,7 @@ from {
 }
 
 50% {
-  transform: scale3d(1.15, 1.15, 1.15);
+  transform: scale3d(1.25, 1.25, 1.25);
 }
 
 to {
@@ -27,7 +27,7 @@ to {
 
 const BouncingLogo = styled('img')`
   width: 60px;
-  animation: ${heartbeat} 1.7s infinite;
+  animation: ${heartbeat} 2s infinite;
 `;
 
 export default Loader;

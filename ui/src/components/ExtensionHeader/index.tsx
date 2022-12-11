@@ -1,7 +1,7 @@
 import React from "react";
-import {Typography} from "@mui/material";
+import { Typography } from "@mui/material";
 
-export const ExtensionHeader = () => {
+const ExtensionHeader = () => {
   return (
     <>
       <Typography variant="h3">Mongo Express</Typography>
@@ -16,3 +16,5 @@ export const ExtensionHeader = () => {
     </>
   );
 };
+
+export default ExtensionHeader;

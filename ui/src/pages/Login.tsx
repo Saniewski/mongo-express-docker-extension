@@ -1,18 +1,20 @@
-import {Box, Container, Link, styled} from "@mui/material";
+import { Box, Container } from "@mui/material";
 import { LoadingButton } from "@mui/lab";
 import React, { useEffect, useState } from "react";
-import { ExtensionConfig } from "../types/ExtensionConfig";
+import { useNavigate } from "react-router-dom";
+import { MongoDbConfig } from "../types/MongoDbConfig";
 import { AUTH_BASIC } from "../utils/constants";
-import { isConfigured, SaveConfig } from "../utils/config";
-import { dockerDesktopClient, dockerDesktopToast } from "../api/utils";
+import { LoadConfig, SaveConfig } from "../utils/config";
+import { ddToast } from "../api/utils";
 import { ConnectionForm } from "../components/ConnectionForm/ConnectionForm";
-import {ExtensionHeader} from "../components/ExtensionHeader/ExtensionHeader";
+import ExtensionHeader from "../components/ExtensionHeader";
 import Loader from "../components/Loader";
 
 export const LoginPage = () => {
-  const [extensionConfig, setExtensionConfig] = useState<ExtensionConfig>({ authMethod: AUTH_BASIC });
+  const [extensionConfig, setExtensionConfig] = useState<MongoDbConfig>({ authMethod: AUTH_BASIC });
   const [isButtonLoading, setButtonLoading] = useState(false);
   const [isLoading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   const credentialsNotEmpty =
     (extensionConfig.hostname && extensionConfig.port) ||
@@ -31,27 +33,20 @@ export const LoginPage = () => {
     if (extensionConfig.rememberCredentials) {
       await SaveConfig(extensionConfig);
     }
-    // TODO: start mongo-express with the provided configuration and navigate to mongo-express local address
-    dockerDesktopToast.success(
-      'hostname: ' + extensionConfig.hostname + '\n' +
-      'port: ' + extensionConfig.port + '\n' +
-      'username: ' + extensionConfig.username + '\n' +
-      'password: ' + extensionConfig.password + '\n' +
-      'connectionString: ' + extensionConfig.connectionString + '\n' +
-      'rememberCredentials: ' + extensionConfig.rememberCredentials + '\n' +
-      'authMethod: ' + extensionConfig.authMethod
-    );
-    setButtonLoading(false);
+    navigate('/mongo-express');
   };
 
   useEffect(() => {
     if (isLoading) {
-      isConfigured()
-        .then((configured) => {
-          if (configured) {
-            // TODO: set initial state from config
-            dockerDesktopToast.success('Credentials not empty: ' + credentialsNotEmpty + '.');
+      LoadConfig()
+        .then((config) => {
+          if (config) {
+            setExtensionConfig(config);
+            ddToast.success('Credentials not empty: ' + credentialsNotEmpty + '.');
           }
+        })
+        .catch((error) => {
+          ddToast.error(error.toString());
         })
         .finally(() => {
           setLoading(false);

@@ -1,5 +1,7 @@
 {
-  "icon": "docker.svg",
+  "name": "mongo-express-docker-extension",
+  "provider": "Saniewski",
+  "icon": "mongo-express-logo.svg",
   "vm": {
     "composefile": "docker-compose.yaml",
     "exposes": {

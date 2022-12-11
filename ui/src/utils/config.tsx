@@ -1,22 +1,25 @@
-import { ExtensionConfig } from "../types/ExtensionConfig";
-import { dockerDesktopToast } from "../api/utils";
+import { MongoDbConfig } from "../types/MongoDbConfig";
+import { ddToast } from "../api/utils";
+import { getMongoDbConfig, resetMongoDbConfig, saveMongoDbConfig } from "../api/config";
 
-export const SaveConfig = async (extensionConfig: ExtensionConfig | undefined): Promise<boolean> => {
-  if (!extensionConfig) {
+export const SaveConfig = async (mongoDBConfig: MongoDbConfig): Promise<boolean> => {
+  // Validate the config
+  if (!mongoDBConfig) {
     return false;
   }
   try {
-    // TODO: save config
+    await saveMongoDbConfig(mongoDBConfig);
     return true;
   } catch (error: any) {
-    dockerDesktopToast.error(error.toString());
+    ddToast.error(error.toString());
     return false;
   }
 };
 
-export const isConfigured = async (): Promise<boolean> => {
-  // TODO: read config
-  // return config.mongoExpressConfigured;
-  // return false;
-  return true;
-};
+export const LoadConfig = async (): Promise<MongoDbConfig> => {
+  return await getMongoDbConfig();
+}
+
+export const ResetConfig = async (): Promise<MongoDbConfig> => {
+  return await resetMongoDbConfig();
+}
