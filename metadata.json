@@ -5,16 +5,16 @@
   "vm": {
     "composefile": "docker-compose.yaml",
     "exposes": {
-      "socket": "extension-mongo-express-docker-extension.sock"
+      "socket": "mongo-express-docker-extension.sock"
     }
   },
   "ui": {
     "dashboard-tab": {
       "title": "Mongo Express",
       "src": "index.html",
-      "root": "ui",
+      "root": "/ui",
       "backend": {
-        "socket": "extension-mongo-express-docker-extension.sock"
+        "socket": "mongo-express-docker-extension.sock"
       }
     }
   }

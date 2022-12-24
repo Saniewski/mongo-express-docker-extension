@@ -1,13 +1,22 @@
 import mongoExpressLogo from '../../assets/mongo-express-logo.png';
 import { styled } from '@mui/material/styles';
 import { keyframes } from '@mui/system';
-import { Box } from '@mui/material';
+import { Box, Container } from '@mui/material';
 
-const Loader = () => {
+export const Loader = () => {
   return (
-    <Box display="flex" alignItems="center" justifyContent="center">
-      <BouncingLogo src={mongoExpressLogo} alt="" />
-    </Box>
+    <Container component="main" maxWidth="xs">
+      <Box
+        sx={{
+          mt: 4,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center'
+        }}
+      >
+        <BouncingLogo src={mongoExpressLogo} alt="" />
+      </Box>
+    </Container>
   );
 };
 
@@ -29,5 +38,3 @@ const BouncingLogo = styled('img')`
   width: 60px;
   animation: ${heartbeat} 2s infinite;
 `;
-
-export default Loader;

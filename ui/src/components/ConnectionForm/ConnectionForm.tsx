@@ -1,5 +1,5 @@
 import mongoExpressLogo from '../../assets/mongo-express-logo.png';
-import { MongoDbConfig } from "../../types/MongoDbConfig";
+import { ExtensionConfig } from "../../types/ExtensionConfig";
 import React, { Dispatch, SetStateAction } from "react";
 import {
   Avatar,
@@ -20,8 +20,8 @@ import { ddClient, ddToast } from "../../api/utils";
 import { ResetConfig } from '../../utils/config';
 
 export const ConnectionForm = (
-  extensionConfig: MongoDbConfig,
-  setExtensionConfig: Dispatch<SetStateAction<MongoDbConfig>>,
+  extensionConfig: ExtensionConfig,
+  setExtensionConfig: Dispatch<SetStateAction<ExtensionConfig>>,
   isButtonLoading?: boolean
 ) => {
   const handleResetCredentials = () => {
@@ -93,7 +93,8 @@ export const ConnectionForm = (
               label="Hostname"
               // name="hostname"
               // autoComplete="hostname"
-              defaultValue={extensionConfig.hostname ?? 'localhost'}
+              // defaultValue={extensionConfig.hostname ?? 'localhost'}
+              value={extensionConfig.hostname}
               required
               autoFocus
               onChange={(e: any) => setExtensionConfig({ ...extensionConfig, hostname: e.target.value })}
@@ -106,7 +107,8 @@ export const ConnectionForm = (
               // name="port"
               type="number"
               // autoComplete="port"
-              defaultValue={extensionConfig.port ?? 27017}
+              // defaultValue={extensionConfig.port ?? 27017}
+              value={extensionConfig.port}
               required
               onChange={(e: any) => setExtensionConfig({ ...extensionConfig, port: e.target.value })}
             />
@@ -120,7 +122,8 @@ export const ConnectionForm = (
             label="Username"
             // name="username"
             // autoComplete="username"
-            defaultValue={extensionConfig.username ?? ''}
+            // defaultValue={extensionConfig.username ?? ''}
+            value={extensionConfig.username}
             onChange={(e: any) => setExtensionConfig({ ...extensionConfig, username: e.target.value })}
           />
           <TextField
@@ -133,7 +136,8 @@ export const ConnectionForm = (
             // name="password"
             type="password"
             autoComplete="password"
-            defaultValue={extensionConfig.password ?? ''}
+            // defaultValue={extensionConfig.password ?? ''}
+            value={extensionConfig.password}
             onChange={(e: any) => setExtensionConfig({ ...extensionConfig, password: e.target.value })}
           />
         </Box>
@@ -148,8 +152,9 @@ export const ConnectionForm = (
             label="Connection String"
             // name="connectionString"
             // autoComplete="connectionString"
-            defaultValue={extensionConfig.connectionString ?? "mongodb://localhost:27017"}
+            // defaultValue={extensionConfig.connectionString ?? "mongodb://localhost:27017"}
             // defaultValue={extensionConfig.connectionString ?? ''}
+            value={extensionConfig.connectionString}
             onChange={(e: any) => setExtensionConfig({ ...extensionConfig, connectionString: e.target.value })}
           />
         </>
@@ -159,6 +164,7 @@ export const ConnectionForm = (
           <FormControlLabel
             disabled={isButtonLoading}
             label="Remember this connection"
+            // value={extensionConfig.rememberCredentials}
             control={<Checkbox
               color="primary"
               checked={extensionConfig.rememberCredentials ?? false}

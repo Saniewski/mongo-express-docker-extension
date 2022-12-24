@@ -1,7 +1,7 @@
 /**
- * Configuration of Mongo Express container.
+ * Configuration of Mongo Express Docker Extension container.
  */
-export type MongoDbConfig = {
+export type ExtensionConfig = {
   /**
    * Hostname of MongoDB server.
    * @type {string}

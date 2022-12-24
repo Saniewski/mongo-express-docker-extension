@@ -29,7 +29,7 @@ LABEL org.opencontainers.image.title="Mongo Express Docker Extension" \
     com.docker.desktop.extension.api.version="0.3.0" \
     com.docker.extension.screenshots="" \
     com.docker.extension.detailed-description="" \
-    com.docker.extension.publisher-url="" \
+    com.docker.extension.publisher-url="https://github.com/Saniewski/mongo-express-docker-extension" \
     com.docker.extension.additional-urls="" \
     com.docker.extension.changelog=""
 
@@ -37,5 +37,6 @@ COPY --from=builder /backend/bin/service /
 COPY docker-compose.yaml .
 COPY metadata.json .
 COPY mongo-express-logo.svg .
+COPY extension-config.yaml .
 COPY --from=client-builder /ui/build ui
-CMD /service -socket /run/guest-services/extension-mongo-express-docker-extension.sock
+CMD /service -socket /run/guest-services/mongo-express-docker-extension.sock
