@@ -1,6 +1,7 @@
 # Mongo Express Docker Extension
 
-Docker Extension for creating and running an embedded instance of Mongo Express connected to any accessible MongoDB server.
+Docker Extension for creating and running an embedded instance of Mongo Express
+connected to any accessible MongoDB server.
 
 ## Features
 
@@ -19,34 +20,34 @@ TODO
 ## Todo list
 
 - [ ] Setup the extension's Docker container:
-  - [ ] Setup extension's metadata with an icon
-  - [ ] Build Golang backend
-  - [ ] Build React frontend
-  - [ ] Download & build Mongo Express
-- [ ] Implement backend features:
-  - [ ] Read and write credentials
-  - [ ] Run Mongo Express with specified credentials
-  - [ ] Check Mongo Express initialization status
+  - [X] Setup extension's metadata with an icon
+  - [ ] Update labels in Dockerfile
+  - [X] Build Golang backend
+  - [X] Build React frontend
+  - ~~[ ] Download & build Mongo Express~~
+- [X] Implement backend features:
+  - [X] Read and write credentials
+  - ~~[ ] Run Mongo Express with specified credentials~~
+  - ~~[ ] Check Mongo Express initialization status~~
 - [ ] Implement frontend features:
   - [X] Write short instructions in the header
   - [X] Add Loader wrapper component
   - [X] Handle two ways of specifying credentials (basic auth and connection string)
-  - [ ] Add a form to specify the MongoDB server to connect to
-  - [ ] Handle remembering credentials
-  - [ ] Add a way to reset saved credentials
-  - [ ] Use a button to start Mongo Express, hang on loading screen until it's ready, and navigate to it
-- [ ] Add screenshots to README.md
+  - [X] Add a form to specify the MongoDB server to connect to
+  - [X] Handle remembering credentials
+  - [X] Add a way to reset saved credentials
+  - [X] Use a button to start Mongo Express, hang on loading screen until it's ready, and navigate to it
+  - [ ] List local Mongo containers to connect to
+  - [ ] Connect to a local Mongo container
+  - [X] Run Mongo Express with specified credentials
+  - [X] Check Mongo Express initialization status
+- [ ] Add screenshots to README.md and to Dockerfile
 - [ ] Add usage instructions to README.md
-- [ ] Add changelog to README.md
+- [ ] Add CHANGELOG.md
 - [ ] Deploy to Docker Hub
 - [ ] Submit to Docker Desktop Extensions marketplace
 
-## Changelog
+## Known bugs
 
-### Pre-release
-
-- Initial commit
-- Add README.md
-- Write short instructions in the header
-- Add Loader wrapper component
-- Handle two ways of specifying credentials (basic auth and connection string)
+- [ ] Mongo Express logo does not render properly in Loader and ServiceUnavailable components
+  (or after navigating between pages)

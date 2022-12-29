@@ -1,11 +1,12 @@
 import mongoExpressLogo from '../../assets/mongo-express-logo.png';
-import {ExtensionConfig} from "../../types/ExtensionConfig";
-import React, {Dispatch, SetStateAction} from "react";
+import { ExtensionConfig } from "../../types/ExtensionConfig";
+import React, { Dispatch, SetStateAction } from "react";
 import {
   Avatar,
   Box,
   Checkbox,
   FormControlLabel,
+  Grid,
   Link,
   Radio,
   RadioGroup,
@@ -13,18 +14,41 @@ import {
   TextField,
   Typography
 } from "@mui/material";
-import {AUTH_BASIC} from "../../utils/constants";
+import OpenInNewIcon from '@mui/icons-material/OpenInNew';
+import { AUTH_BASIC } from "../../utils/constants";
+import { ddClient, ddToast } from "../../api/utils";
+import { ResetConfig } from '../../utils/config';
 
 export const ConnectionForm = (
   extensionConfig: ExtensionConfig,
   setExtensionConfig: Dispatch<SetStateAction<ExtensionConfig>>,
   isButtonLoading?: boolean
 ) => {
+  const handleResetCredentials = () => {
+    ResetConfig()
+      .then((config) => {
+        setExtensionConfig(config);
+        ddToast.success('Credentials reset.');
+      })
+      .catch((error) => {
+        ddToast.error(error.toString());
+      });
+  };
+
   return (
     <>
       <Avatar sx={{ m: 1, width: 60, height: 60 }} alt="Mongo Express Logo" src={mongoExpressLogo} />
       <Typography variant="h5">Connect to MongoDB</Typography>
+      <Link
+        href="#"
+        onClick={() => ddClient?.host?.openExternal('https://www.mongodb.com/docs/manual/reference/connection-string/')}
+        variant="body2"
+      >
+        {"Get help connecting to MongoDB "}
+        <OpenInNewIcon fontSize="inherit" />
+      </Link>
       <RadioGroup
+        sx={{ mt: 2 }}
         aria-disabled
         row
         value={extensionConfig.authMethod ?? 'basic'}
@@ -58,18 +82,6 @@ export const ConnectionForm = (
           label="Connection String"
         />
       </RadioGroup>
-      {/*<Grid container>*/}
-      {/*  <Grid item xs>*/}
-      <Link href="#" variant="body2">
-        Get help connecting to MongoDB
-      </Link>
-      {/*  </Grid>*/}
-      {/*  <Grid item>*/}
-      {/*    <Link href="#" variant="body2">*/}
-      {/*      {"Don't have an account? Sign Up"}*/}
-      {/*    </Link>*/}
-      {/*  </Grid>*/}
-      {/*</Grid>*/}
       {extensionConfig.authMethod === AUTH_BASIC ? (
         <Box>
           <Stack direction="row" alignItems="start" spacing={0}>
@@ -81,7 +93,8 @@ export const ConnectionForm = (
               label="Hostname"
               // name="hostname"
               // autoComplete="hostname"
-              defaultValue={extensionConfig.hostname ?? 'localhost'}
+              // defaultValue={extensionConfig.hostname ?? 'localhost'}
+              value={extensionConfig.hostname}
               required
               autoFocus
               onChange={(e: any) => setExtensionConfig({ ...extensionConfig, hostname: e.target.value })}
@@ -94,7 +107,8 @@ export const ConnectionForm = (
               // name="port"
               type="number"
               // autoComplete="port"
-              defaultValue={extensionConfig.port ?? 27017}
+              // defaultValue={extensionConfig.port ?? 27017}
+              value={extensionConfig.port}
               required
               onChange={(e: any) => setExtensionConfig({ ...extensionConfig, port: e.target.value })}
             />
@@ -108,7 +122,8 @@ export const ConnectionForm = (
             label="Username"
             // name="username"
             // autoComplete="username"
-            defaultValue={extensionConfig.username ?? ''}
+            // defaultValue={extensionConfig.username ?? ''}
+            value={extensionConfig.username}
             onChange={(e: any) => setExtensionConfig({ ...extensionConfig, username: e.target.value })}
           />
           <TextField
@@ -121,7 +136,8 @@ export const ConnectionForm = (
             // name="password"
             type="password"
             autoComplete="password"
-            defaultValue={extensionConfig.password ?? ''}
+            // defaultValue={extensionConfig.password ?? ''}
+            value={extensionConfig.password}
             onChange={(e: any) => setExtensionConfig({ ...extensionConfig, password: e.target.value })}
           />
         </Box>
@@ -136,21 +152,36 @@ export const ConnectionForm = (
             label="Connection String"
             // name="connectionString"
             // autoComplete="connectionString"
-            defaultValue={extensionConfig.connectionString ?? "mongodb://localhost:27017"}
+            // defaultValue={extensionConfig.connectionString ?? "mongodb://localhost:27017"}
             // defaultValue={extensionConfig.connectionString ?? ''}
+            value={extensionConfig.connectionString}
             onChange={(e: any) => setExtensionConfig({ ...extensionConfig, connectionString: e.target.value })}
           />
         </>
       )}
-      <FormControlLabel
-        disabled={isButtonLoading}
-        label="Remember this connection"
-        control={<Checkbox
-          color="primary"
-          checked={extensionConfig.rememberCredentials ?? false}
-          onChange={(e: any) => setExtensionConfig({ ...extensionConfig, rememberCredentials: e.target.checked })}
-        />}
-      />
+      <Grid container>
+        <Grid item xs>
+          <FormControlLabel
+            disabled={isButtonLoading}
+            label="Remember this connection"
+            // value={extensionConfig.rememberCredentials}
+            control={<Checkbox
+              color="primary"
+              checked={extensionConfig.rememberCredentials ?? false}
+              onChange={(e: any) => setExtensionConfig({ ...extensionConfig, rememberCredentials: e.target.checked })}
+            />}
+          />
+        </Grid>
+        <Grid item>
+          <Link
+            href="#"
+            onClick={handleResetCredentials}
+            variant="body2"
+          >
+            {"Reset saved credentials"}
+          </Link>
+        </Grid>
+      </Grid>
     </>
   );
 };

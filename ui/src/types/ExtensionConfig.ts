@@ -1,5 +1,5 @@
 /**
- * Configuration of Mongo Express container.
+ * Configuration of Mongo Express Docker Extension container.
  */
 export type ExtensionConfig = {
   /**

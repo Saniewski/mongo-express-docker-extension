@@ -1,18 +1,20 @@
-import {Box, Container, Link, styled} from "@mui/material";
+import { Box, Container } from "@mui/material";
 import { LoadingButton } from "@mui/lab";
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { ExtensionConfig } from "../types/ExtensionConfig";
 import { AUTH_BASIC } from "../utils/constants";
-import { isConfigured, SaveConfig } from "../utils/config";
-import { dockerDesktopClient, dockerDesktopToast } from "../api/utils";
+import { LoadConfig, SaveConfig } from "../utils/config";
+import { ddToast } from "../api/utils";
 import { ConnectionForm } from "../components/ConnectionForm/ConnectionForm";
-import {ExtensionHeader} from "../components/ExtensionHeader/ExtensionHeader";
-import Loader from "../components/Loader";
+import { ExtensionHeader } from "../components/ExtensionHeader/ExtensionHeader";
+import { Loader } from "../components/Loader/Loader";
 
 export const LoginPage = () => {
   const [extensionConfig, setExtensionConfig] = useState<ExtensionConfig>({ authMethod: AUTH_BASIC });
   const [isButtonLoading, setButtonLoading] = useState(false);
   const [isLoading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   const credentialsNotEmpty =
     (extensionConfig.hostname && extensionConfig.port) ||
@@ -29,45 +31,45 @@ export const LoginPage = () => {
       extensionConfig.password = undefined;
     }
     if (extensionConfig.rememberCredentials) {
-      await SaveConfig(extensionConfig);
+      const savingResult = await SaveConfig(extensionConfig);
+      if (!savingResult) {
+        setButtonLoading(false);
+        ddToast.error("Failed to save credentials");
+      }
     }
-    // TODO: start mongo-express with the provided configuration and navigate to mongo-express local address
-    dockerDesktopToast.success(
-      'hostname: ' + extensionConfig.hostname + '\n' +
-      'port: ' + extensionConfig.port + '\n' +
-      'username: ' + extensionConfig.username + '\n' +
-      'password: ' + extensionConfig.password + '\n' +
-      'connectionString: ' + extensionConfig.connectionString + '\n' +
-      'rememberCredentials: ' + extensionConfig.rememberCredentials + '\n' +
-      'authMethod: ' + extensionConfig.authMethod
-    );
+    navigate('/mongo-express', {
+      state: {
+        extensionConfig: extensionConfig,
+      }
+    });
     setButtonLoading(false);
   };
 
   useEffect(() => {
-    if (isLoading) {
-      isConfigured()
-        .then((configured) => {
-          if (configured) {
-            // TODO: set initial state from config
-            dockerDesktopToast.success('Credentials not empty: ' + credentialsNotEmpty + '.');
-          }
-        })
-        .finally(() => {
-          setLoading(false);
-        });
-    }
-  });
+    // if (isLoading) {
+    LoadConfig()
+      .then((config) => {
+        if (config) {
+          setExtensionConfig(config);
+        }
+      })
+      .catch((error) => {
+        console.error(error.toString());
+        ddToast.error(error.toString());
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+    // }
+  }, [isLoading]);
 
   return (
     <>
       <ExtensionHeader />
+      {/*<Typography>credentialsNotEmpty: "{credentialsNotEmpty}"</Typography>*/}
+      {/*<Typography>{JSON.stringify(extensionConfig).split(',').join(', ')}</Typography>*/}
       <Container component="main" maxWidth="xs">
-        <Box
-          sx={{
-            marginTop: 4,
-          }}
-        >
+        <Box mt={4} >
           {isLoading ? (
             <Loader />
           ) : (
