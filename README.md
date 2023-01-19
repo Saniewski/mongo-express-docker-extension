@@ -10,6 +10,13 @@ Mongo Express Docker Extension allows you to connect to any (local or remote) Mo
 - Specify the MongoDB server to connect to.
 - Save credentials for future use.
 
+## Usage
+
+To connect to a MongoDB server, you can use the `Basic` authentication method by providing a hostname and a port of the
+MongoDB instance. Specifying a username and password is optional, depending on the security of your MongoDB server.
+Alternatively, you can use the `Connection String` authentication method by providing a valid MongoDB connection string.
+For instructions on how to use MongoDB connection strings, please, refer to [the official MongoDB documentation][7].
+
 ## Screenshots
 
 ![Login Page - Basic 1][1]
@@ -23,13 +30,6 @@ Mongo Express Docker Extension allows you to connect to any (local or remote) Mo
 ![Mongo Express Dashboard][5]
 
 ![Service Unavailable][6]
-
-## Usage
-
-To connect to a MongoDB server, you can use the `Basic` authentication method by providing a hostname and a port of the
-MongoDB instance. Specifying a username and password is optional, depending on the security of your MongoDB server.
-Alternatively, you can use the `Connection String` authentication method by providing a valid MongoDB connection string.
-For instructions on how to use MongoDB connection strings, please, refer to [the official MongoDB documentation][7].
 
 [1]: https://raw.githubusercontent.com/Saniewski/mongo-express-docker-extension/main/docs/screenshots/01-login-page-basic-1.png
 [2]: https://raw.githubusercontent.com/Saniewski/mongo-express-docker-extension/main/docs/screenshots/01-login-page-basic-1.png
