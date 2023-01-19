@@ -1,53 +1,40 @@
 # Mongo Express Docker Extension
 
-Docker Extension for creating and running an embedded instance of Mongo Express
-connected to any accessible MongoDB server.
+Run Mongo Express in Docker Desktop and connect to any MongoDB server.
+
+Mongo Express Docker Extension allows you to connect to any (local or remote) MongoDB server without having to install Mongo Express locally or manually create a Mongo Express Docker container.
 
 ## Features
 
-- Run Mongo Express in Docker Desktop
-- Specify the MongoDB server to connect to
-- Save credentials for future use
+- Run Mongo Express in Docker Desktop.
+- Specify the MongoDB server to connect to.
+- Save credentials for future use.
 
 ## Screenshots
 
-TODO
+![Login Page - Basic 1][1]
+
+![Login Page - Basic 2][2]
+
+![Login Page - Connection String][3]
+
+![Loading Mongo Express][4]
+
+![Mongo Express Dashboard][5]
+
+![Service Unavailable][6]
 
 ## Usage
 
-TODO
+To connect to a MongoDB server, you can use the `Basic` authentication method by providing a hostname and a port of the
+MongoDB instance. Specifying a username and password is optional, depending on the security of your MongoDB server.
+Alternatively, you can use the `Connection String` authentication method by providing a valid MongoDB connection string.
+For instructions on how to use MongoDB connection strings, please, refer to [the official MongoDB documentation][7].
 
-## Todo list
-
-- [ ] Setup the extension's Docker container:
-  - [X] Setup extension's metadata with an icon
-  - [ ] Update labels in Dockerfile
-  - [X] Build Golang backend
-  - [X] Build React frontend
-  - ~~[ ] Download & build Mongo Express~~
-- [X] Implement backend features:
-  - [X] Read and write credentials
-  - ~~[ ] Run Mongo Express with specified credentials~~
-  - ~~[ ] Check Mongo Express initialization status~~
-- [ ] Implement frontend features:
-  - [X] Write short instructions in the header
-  - [X] Add Loader wrapper component
-  - [X] Handle two ways of specifying credentials (basic auth and connection string)
-  - [X] Add a form to specify the MongoDB server to connect to
-  - [X] Handle remembering credentials
-  - [X] Add a way to reset saved credentials
-  - [X] Use a button to start Mongo Express, hang on loading screen until it's ready, and navigate to it
-  - [ ] List local Mongo containers to connect to
-  - [ ] Connect to a local Mongo container
-  - [X] Run Mongo Express with specified credentials
-  - [X] Check Mongo Express initialization status
-- [ ] Add screenshots to README.md and to Dockerfile
-- [ ] Add usage instructions to README.md
-- [ ] Add CHANGELOG.md
-- [ ] Deploy to Docker Hub
-- [ ] Submit to Docker Desktop Extensions marketplace
-
-## Known bugs
-
-- [ ] Mongo Express logo does not render properly in Loader and ServiceUnavailable components
-  (or after navigating between pages)
+[1]: https://raw.githubusercontent.com/Saniewski/mongo-express-docker-extension/main/docs/screenshots/01-login-page-basic-1.png
+[2]: https://raw.githubusercontent.com/Saniewski/mongo-express-docker-extension/main/docs/screenshots/01-login-page-basic-1.png
+[3]: https://raw.githubusercontent.com/Saniewski/mongo-express-docker-extension/main/docs/screenshots/01-login-page-basic-1.png
+[4]: https://raw.githubusercontent.com/Saniewski/mongo-express-docker-extension/main/docs/screenshots/01-login-page-basic-1.png
+[5]: https://raw.githubusercontent.com/Saniewski/mongo-express-docker-extension/main/docs/screenshots/01-login-page-basic-1.png
+[6]: https://raw.githubusercontent.com/Saniewski/mongo-express-docker-extension/main/docs/screenshots/01-login-page-basic-1.png
+[7]: https://www.mongodb.com/docs/manual/reference/connection-string/
