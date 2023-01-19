@@ -13,7 +13,7 @@ export const ServiceUnavailable = () => {
     <Container component="main" maxWidth="xs">
       <Box
         sx={{
-          mt: 4,
+          mt: 8,
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center'
@@ -21,7 +21,7 @@ export const ServiceUnavailable = () => {
       >
         <Avatar sx={{ m: 1, width: 60, height: 60 }} alt="Mongo Express Logo" src={mongoExpressLogo} />
         <Typography variant="h5">Service Unavailable</Typography>
-        <Typography variant="body1" color="text.secondary" mt={2}>
+        <Typography variant="body1" color="text.secondary" mt={2} align="justify">
           Please, make sure the credentials are correct or try again after restarting / reinstalling the extension.<br />
           If the problem persists, please create an issue on the extension's GitHub page.
         </Typography>
@@ -37,12 +37,12 @@ export const ServiceUnavailable = () => {
           </Grid>
           <Grid item>
             <Button
+              endIcon={<OpenInNewIcon />}
               onClick={() =>
                 ddClient?.host?.openExternal('https://github.com/Saniewski/mongo-express-docker-extension/issues/new')}
               variant="outlined"
             >
-              {"Report an issue "}
-              <OpenInNewIcon fontSize="inherit" />
+              {"Report an issue"}
             </Button>
           </Grid>
         </Grid>
