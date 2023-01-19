@@ -1,8 +1,7 @@
-import { Box } from "@mui/material";
+import {Box, Grid, LinearProgress, Typography } from "@mui/material";
 import React, { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { ddToast } from "../api/utils";
-import { Loader } from "../components/Loader/Loader";
 import { checkMongoExpressStatus, removeMongoExpress, startMongoExpress } from "../api/docker";
 import { ServiceUnavailable } from "../components/ServiceUnavailable/ServiceUnavailable";
 import { ExtensionConfig } from "../types/ExtensionConfig";
@@ -16,6 +15,8 @@ export const MongoExpressPage = () => {
 
   useEffect(() => {
     if (isLoading) {
+      document.body.classList.add('full-screen-body');
+      document.getElementById('root')?.classList.add('full-screen-root');
       startMongoExpress(extensionConfig)
         .then(() => {
           let retries = 30;
@@ -63,7 +64,22 @@ export const MongoExpressPage = () => {
   return (
     <>
       {isLoading ? (
-        <Loader />
+        <Grid
+          container
+          flex={1}
+          direction="column"
+          height="100%"
+          justifyContent="center"
+          alignItems="center"
+          spacing={4}
+        >
+          <Grid item width="90%">
+            <LinearProgress />
+          </Grid>
+          <Grid item>
+            <Typography>Mongo Express is starting...</Typography>
+          </Grid>
+        </Grid>
       ) : (
         <>
           {!isReady ? (
