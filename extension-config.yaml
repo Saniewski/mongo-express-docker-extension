@@ -1,0 +1,7 @@
+hostname: localhost
+port: 27017
+username: ""
+password: ""
+connectionString: mongodb://localhost:27017
+rememberCredentials: false
+authMethod: basic

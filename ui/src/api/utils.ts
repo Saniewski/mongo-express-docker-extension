@@ -1,7 +1,7 @@
-import {createDockerDesktopClient} from "@docker/extension-api-client";
+import { createDockerDesktopClient } from "@docker/extension-api-client";
 
-export const dockerDesktopClient = createDockerDesktopClient();
-export const dockerDesktopToast: any = dockerDesktopClient.desktopUI.toast ??
+export const ddClient = createDockerDesktopClient();
+export const ddToast: any = ddClient.desktopUI.toast ??
   new Proxy(
     {},
     {

@@ -1,22 +1,41 @@
 import { ExtensionConfig } from "../types/ExtensionConfig";
-import { dockerDesktopToast } from "../api/utils";
+import { ddToast } from "../api/utils";
+import { getExtensionConfig, saveExtensionConfig } from "../api/config";
+import { AUTH_BASIC } from "./constants";
 
-export const SaveConfig = async (extensionConfig: ExtensionConfig | undefined): Promise<boolean> => {
+export const SaveConfig = async (extensionConfig: ExtensionConfig): Promise<boolean> => {
+  // Validate the config
   if (!extensionConfig) {
     return false;
   }
   try {
-    // TODO: save config
+    await saveExtensionConfig(extensionConfig);
     return true;
   } catch (error: any) {
-    dockerDesktopToast.error(error.toString());
+    ddToast.error(error.toString());
     return false;
   }
 };
 
-export const isConfigured = async (): Promise<boolean> => {
-  // TODO: read config
-  // return config.mongoExpressConfigured;
-  // return false;
-  return true;
-};
+export const LoadConfig = async (): Promise<ExtensionConfig> => {
+  const config = await getExtensionConfig();
+  return {
+    ...config,
+    rememberCredentials: config.rememberCredentials ?? false,
+    authMethod: config.authMethod ?? AUTH_BASIC
+  };
+}
+
+export const ResetConfig = async (): Promise<ExtensionConfig> => {
+  const config: ExtensionConfig = {
+    hostname: 'localhost',
+    port: 27017,
+    username: undefined,
+    password: undefined,
+    connectionString: 'mongodb://localhost:27017',
+    rememberCredentials: false,
+    authMethod: AUTH_BASIC,
+  }
+  await SaveConfig(config);
+  return config;
+}

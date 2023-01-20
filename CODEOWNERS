@@ -1,0 +1,6 @@
+# CODEOWNERS
+# This file is used to define code owners for certain parts of the repository.
+
+# The last matching pattern takes the most precedence.
+
+* @Saniewski

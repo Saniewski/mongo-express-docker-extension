@@ -1,0 +1,8 @@
+.full-screen-body {
+  height: 100vh;
+  padding: 0
+}
+
+.full-screen-root {
+  height: 100%;
+}
