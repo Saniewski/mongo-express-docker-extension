@@ -10,10 +10,9 @@ without having to install Mongo Express locally or manually create a Mongo Expre
 - Save credentials for future use.
 
 ## Installation
-You can install the extension directly from the Docker Desktop marketplace by pasting this link in your browser:
-```
-docker-desktop://extensions/marketplace?extensionId=saniewski/mongo-express-docker-extension&tag=latest
-```
+You can install the extension directly from the Docker Desktop marketplace using this link:
+https://open.docker.com/extensions/marketplace?extensionId=saniewski/mongo-express-docker-extension
+
 Alternatively, you can install it manually by running the following command in your terminal:
 ```bash
 docker extension install saniewski/mongo-express-docker-extension:latest
