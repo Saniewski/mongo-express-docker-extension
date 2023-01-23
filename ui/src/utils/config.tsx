@@ -1,7 +1,7 @@
-import {ExtensionConfig} from "../types/ExtensionConfig";
-import {ddToast} from "../api/utils";
-import {getExtensionConfig, saveExtensionConfig} from "../api/config";
-import {AUTH_BASIC} from "./constants";
+import { ExtensionConfig } from "../types/ExtensionConfig";
+import { ddToast } from "../api/utils";
+import { getExtensionConfig, saveExtensionConfig } from "../api/config";
+import { AUTH_BASIC } from "./constants";
 
 export const SaveConfig = async (extensionConfig: ExtensionConfig): Promise<boolean> => {
   if (!extensionConfig) {
