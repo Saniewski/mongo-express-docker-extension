@@ -36,9 +36,9 @@ For instructions on how to use MongoDB connection strings, please, refer to [the
 ![Service Unavailable][6]
 
 [1]: https://raw.githubusercontent.com/Saniewski/mongo-express-docker-extension/main/docs/screenshots/01-login-page-basic-1.png
-[2]: https://raw.githubusercontent.com/Saniewski/mongo-express-docker-extension/main/docs/screenshots/01-login-page-basic-1.png
-[3]: https://raw.githubusercontent.com/Saniewski/mongo-express-docker-extension/main/docs/screenshots/01-login-page-basic-1.png
-[4]: https://raw.githubusercontent.com/Saniewski/mongo-express-docker-extension/main/docs/screenshots/01-login-page-basic-1.png
-[5]: https://raw.githubusercontent.com/Saniewski/mongo-express-docker-extension/main/docs/screenshots/01-login-page-basic-1.png
-[6]: https://raw.githubusercontent.com/Saniewski/mongo-express-docker-extension/main/docs/screenshots/01-login-page-basic-1.png
+[2]: https://raw.githubusercontent.com/Saniewski/mongo-express-docker-extension/main/docs/screenshots/02-login-page-basic-2.png
+[3]: https://raw.githubusercontent.com/Saniewski/mongo-express-docker-extension/main/docs/screenshots/03-login-page-connection-string.png
+[4]: https://raw.githubusercontent.com/Saniewski/mongo-express-docker-extension/main/docs/screenshots/04-loading-mongo-express.png
+[5]: https://raw.githubusercontent.com/Saniewski/mongo-express-docker-extension/main/docs/screenshots/05-mongo-express-dashboard.png
+[6]: https://raw.githubusercontent.com/Saniewski/mongo-express-docker-extension/main/docs/screenshots/06-service-unavailable.png
 [7]: https://www.mongodb.com/docs/manual/reference/connection-string/
