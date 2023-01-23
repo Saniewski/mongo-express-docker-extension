@@ -4,7 +4,6 @@ import { getExtensionConfig, saveExtensionConfig } from "../api/config";
 import { AUTH_BASIC } from "./constants";
 
 export const SaveConfig = async (extensionConfig: ExtensionConfig): Promise<boolean> => {
-  // Validate the config
   if (!extensionConfig) {
     return false;
   }
@@ -18,20 +17,15 @@ export const SaveConfig = async (extensionConfig: ExtensionConfig): Promise<bool
 };
 
 export const LoadConfig = async (): Promise<ExtensionConfig> => {
-  const config = await getExtensionConfig();
-  return {
-    ...config,
-    rememberCredentials: config.rememberCredentials ?? false,
-    authMethod: config.authMethod ?? AUTH_BASIC
-  };
+  return await getExtensionConfig();
 }
 
 export const ResetConfig = async (): Promise<ExtensionConfig> => {
   const config: ExtensionConfig = {
     hostname: 'localhost',
     port: 27017,
-    username: undefined,
-    password: undefined,
+    username: '',
+    password: '',
     connectionString: 'mongodb://localhost:27017',
     rememberCredentials: false,
     authMethod: AUTH_BASIC,
