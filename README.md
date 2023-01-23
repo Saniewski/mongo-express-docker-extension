@@ -10,18 +10,9 @@ without having to install Mongo Express locally or manually create a Mongo Expre
 - Save credentials for future use.
 
 ## Installation
-You can install the extension using Make or manually.
-
-### Installation using Make
-To install using Make, simply run the following command in the root of the repository:
+You can install the extension manually using the image hosted on the Docker Hub.
+You can do this by running the following command:
 ```bash
-make install-extension
-```
-
-### Manual Installation
-To install manually, run the following commands in the root of the repository:
-```bash
-docker build --tag=saniewski/mongo-express-docker-extension:latest .
 docker extension install saniewski/mongo-express-docker-extension:latest
 ```
 

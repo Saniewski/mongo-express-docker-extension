@@ -46,7 +46,8 @@ LABEL org.opencontainers.image.title="Mongo Express Docker Extension" \
     com.docker.extension.changelog="<p>Visit <a href=\"https://github.com/Saniewski/mongo-express-docker-extension/releases\">the releases page</a> to see the full changelog.</p>" \
     com.docker.extension.detailed-description="\
     <p>Run Mongo Express in Docker Desktop and connect to any MongoDB server.</p>\
-    <p>Mongo Express Docker Extension allows you to connect to any (local or remote) MongoDB server without having to install Mongo Express locally or manually create a Mongo Express Docker container.</p>\
+    <p>Mongo Express Docker Extension allows you to connect to any (local or remote) MongoDB server\
+    without having to install Mongo Express locally or manually create a Mongo Express Docker container.</p>\
     <h3>Features</h3>\
     <ul>\
     <li>Run Mongo Express in Docker Desktop.</li>\
@@ -54,9 +55,9 @@ LABEL org.opencontainers.image.title="Mongo Express Docker Extension" \
     <li>Save credentials for future use.</li>\
     </ul>\
     <h3>Usage</h3>\
-    <p>To connect to a MongoDB server, you can use the \"Basic\" authentication method by providing a hostname and a port of the MongoDB instance.\
-    Specifying a username and password is optional, depending on the security of your MongoDB server.\
-    Alternatively, you can use the \"Connection String\" authentication method by providing a valid MongoDB connection string.\
+    <p>To connect to a MongoDB server, you can use the `Basic` authentication method by providing a hostname and a port of the\
+    MongoDB instance. Specifying a username and password is optional, depending on the security of your MongoDB server.\
+    Alternatively, you can use the `Connection String` authentication method by providing a valid MongoDB connection string.\
     For instructions on how to use MongoDB connection strings, please, refer to <a href=\"https://www.mongodb.com/docs/manual/reference/connection-string/\">the official MongoDB documentation</a>.</p>\
     "
 
