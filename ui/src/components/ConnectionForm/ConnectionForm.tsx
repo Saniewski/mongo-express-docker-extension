@@ -35,12 +35,12 @@ export const ConnectionForm = () => {
   const HandleConnect = async () => {
     setButtonLoading(true);
     if (extensionConfig.authMethod === AUTH_BASIC) {
-      extensionConfig.connectionString = undefined;
+      extensionConfig.connectionString = '';
     } else {
-      extensionConfig.hostname = undefined;
-      extensionConfig.port = undefined;
-      extensionConfig.username = undefined;
-      extensionConfig.password = undefined;
+      extensionConfig.hostname = '';
+      extensionConfig.port = 0;
+      extensionConfig.username = '';
+      extensionConfig.password = '';
     }
     if (extensionConfig.rememberCredentials) {
       const savingResult = await SaveConfig(extensionConfig);
@@ -54,13 +54,12 @@ export const ConnectionForm = () => {
         extensionConfig: extensionConfig,
       }
     });
-    setButtonLoading(false);
   };
 
   const HandleResetCredentials = () => {
     ResetConfig()
       .then((config) => {
-        setExtensionConfig(config);
+        setExtensionConfig({ ...config, authMethod: extensionConfig.authMethod });
         ddToast.success('Credentials reset.');
       })
       .catch((error) => {
@@ -110,40 +109,24 @@ export const ConnectionForm = () => {
               onClick={() => ddClient?.host?.openExternal('https://www.mongodb.com/docs/manual/reference/connection-string/')}
               variant="body2"
             >
-              {"Get help connecting to MongoDB "}
+              {"Get help connecting to MongoDB"}
               <OpenInNewIcon fontSize="inherit" />
             </Link>
             <RadioGroup
               sx={{ mt: 2 }}
-              aria-disabled
               row
-              value={extensionConfig.authMethod ?? 'basic'}
-              defaultValue={extensionConfig.authMethod}
-              name="radio-buttons-group"
+              value={extensionConfig.authMethod}
+              onChange={(e: any) => setExtensionConfig({ ...extensionConfig, authMethod: e.target.value })}
             >
               <FormControlLabel
                 disabled={isButtonLoading}
-                onClick={
-                  isButtonLoading
-                    ? undefined
-                    : (e: any) => setExtensionConfig({ ...extensionConfig, authMethod: e.target.value })
-                }
-                value="basic"
+                value={AUTH_BASIC}
                 control={<Radio />}
                 label="Basic"
               />
               <FormControlLabel
                 disabled={isButtonLoading}
-                onClick={
-                  isButtonLoading
-                    ? undefined
-                    : (e: any) =>
-                      setExtensionConfig({
-                        ...extensionConfig,
-                        authMethod: e.target.value,
-                      })
-                }
-                value="connectionString"
+                value={AUTH_CONNECTION_STRING}
                 control={<Radio />}
                 label="Connection String"
               />
@@ -155,11 +138,7 @@ export const ConnectionForm = () => {
                     disabled={isButtonLoading}
                     margin="normal"
                     fullWidth
-                    // id="hostname"
                     label="Hostname"
-                    // name="hostname"
-                    // autoComplete="hostname"
-                    // defaultValue={extensionConfig.hostname ?? 'localhost'}
                     value={extensionConfig.hostname}
                     required
                     autoFocus
@@ -168,12 +147,8 @@ export const ConnectionForm = () => {
                   <TextField
                     disabled={isButtonLoading}
                     margin="normal"
-                    // id="port"
                     label="Port"
-                    // name="port"
                     type="number"
-                    // autoComplete="port"
-                    // defaultValue={extensionConfig.port ?? 27017}
                     value={extensionConfig.port}
                     required
                     onChange={(e: any) => setExtensionConfig({ ...extensionConfig, port: e.target.value })}
@@ -184,11 +159,7 @@ export const ConnectionForm = () => {
                   margin="normal"
                   fullWidth
                   key="username"
-                  // id="username"
                   label="Username"
-                  // name="username"
-                  // autoComplete="username"
-                  // defaultValue={extensionConfig.username ?? ''}
                   value={extensionConfig.username}
                   onChange={(e: any) => setExtensionConfig({ ...extensionConfig, username: e.target.value })}
                 />
@@ -197,12 +168,8 @@ export const ConnectionForm = () => {
                   margin="normal"
                   fullWidth
                   key="password"
-                  // id="password"
                   label="Password"
-                  // name="password"
                   type="password"
-                  autoComplete="password"
-                  // defaultValue={extensionConfig.password ?? ''}
                   value={extensionConfig.password}
                   onChange={(e: any) => setExtensionConfig({ ...extensionConfig, password: e.target.value })}
                 />
@@ -213,12 +180,7 @@ export const ConnectionForm = () => {
                 margin="normal"
                 fullWidth
                 key="connectionString"
-                // id="connectionString"
                 label="Connection String"
-                // name="connectionString"
-                // autoComplete="connectionString"
-                // defaultValue={extensionConfig.connectionString ?? "mongodb://localhost:27017"}
-                // defaultValue={extensionConfig.connectionString ?? ''}
                 value={extensionConfig.connectionString}
                 onChange={(e: any) => setExtensionConfig({ ...extensionConfig, connectionString: e.target.value })}
               />
@@ -227,10 +189,8 @@ export const ConnectionForm = () => {
               <FormControlLabel
                 disabled={isButtonLoading}
                 label="Remember this connection"
-                // value={extensionConfig.rememberCredentials}
                 control={<Checkbox
-                  color="primary"
-                  checked={extensionConfig.rememberCredentials ?? false}
+                  checked={extensionConfig.rememberCredentials}
                   onChange={(e: any) => setExtensionConfig({ ...extensionConfig, rememberCredentials: e.target.checked })}
                 />}
               />
