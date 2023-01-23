@@ -1,4 +1,4 @@
-import {Box, Grid, LinearProgress, Typography } from "@mui/material";
+import { Box, Grid, LinearProgress, Typography } from "@mui/material";
 import React, { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { ddToast } from "../api/utils";
