@@ -11,6 +11,7 @@ without having to install Mongo Express locally or manually create a Mongo Expre
 
 ## Installation
 You can install the extension directly from the Docker Desktop marketplace using this link:
+
 https://open.docker.com/extensions/marketplace?extensionId=saniewski/mongo-express-docker-extension
 
 Alternatively, you can install it manually by running the following command in your terminal:
