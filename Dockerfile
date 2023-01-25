@@ -35,7 +35,7 @@ LABEL org.opencontainers.image.title="Mongo Express Docker Extension" \
         {\"alt\":\"Login Page - Connection String\", \"url\":\"https://raw.githubusercontent.com/Saniewski/mongo-express-docker-extension/main/docs/screenshots/03-login-page-connection-string.png\"},\
         {\"alt\":\"Loading Mongo Express\", \"url\":\"https://raw.githubusercontent.com/Saniewski/mongo-express-docker-extension/main/docs/screenshots/04-loading-mongo-express.png\"},\
         {\"alt\":\"Mongo Express Dashboard\", \"url\":\"https://raw.githubusercontent.com/Saniewski/mongo-express-docker-extension/main/docs/screenshots/05-mongo-express-dashboard.png\"},\
-        {\"alt\":\"Service Unavailable\", \"url\":\"https://raw.githubusercontent.com/Saniewski/mongo-express-docker-extension/main/docs/screenshots/06-service-unavailable.png\"},\
+        {\"alt\":\"Service Unavailable\", \"url\":\"https://raw.githubusercontent.com/Saniewski/mongo-express-docker-extension/main/docs/screenshots/06-service-unavailable.png\"}\
         ]" \
     com.docker.extension.additional-urls="[\
         {\"title\":\"Documentation\",\"url\":\"https://github.com/Saniewski/mongo-express-docker-extension/blob/main/README.md\"},\

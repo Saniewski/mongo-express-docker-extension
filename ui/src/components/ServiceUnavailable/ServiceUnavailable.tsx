@@ -1,4 +1,4 @@
-import { Avatar, Box, Button, Container, Grid, Typography } from '@mui/material';
+import { Avatar, Box, Button, Container, Stack, Typography } from '@mui/material';
 import React from "react";
 import mongoExpressLogo from "../../assets/mongo-express-logo.png";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
@@ -25,27 +25,23 @@ export const ServiceUnavailable = () => {
           Please, make sure the credentials are correct or try again after restarting / reinstalling the extension.<br />
           If the problem persists, please create an issue on the extension's GitHub page.
         </Typography>
-        <Grid container mt={1}>
-          <Grid item xs>
-            <Button
-              startIcon={<ArrowBackIcon />}
-              onClick={() => navigate('/')}
-              variant="contained"
-            >
-              {"Return to the main page"}
-            </Button>
-          </Grid>
-          <Grid item>
-            <Button
-              endIcon={<OpenInNewIcon />}
-              onClick={() =>
-                ddClient?.host?.openExternal('https://github.com/Saniewski/mongo-express-docker-extension/issues/new')}
-              variant="outlined"
-            >
-              {"Report an issue"}
-            </Button>
-          </Grid>
-        </Grid>
+        <Stack direction="row" spacing={2} mt={2}>
+          <Button
+            startIcon={<ArrowBackIcon />}
+            onClick={() => navigate('/')}
+            variant="contained"
+          >
+            {"Return to the main page"}
+          </Button>
+          <Button
+            endIcon={<OpenInNewIcon />}
+            onClick={() =>
+              ddClient?.host?.openExternal('https://github.com/Saniewski/mongo-express-docker-extension/issues/new')}
+            variant="outlined"
+          >
+            {"Report an issue"}
+          </Button>
+        </Stack>
       </Box>
     </Container>
   );

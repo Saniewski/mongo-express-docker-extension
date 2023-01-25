@@ -112,106 +112,107 @@ export const ConnectionForm = () => {
               {"Get help connecting to MongoDB"}
               <OpenInNewIcon fontSize="inherit" />
             </Link>
-            <RadioGroup
-              sx={{ mt: 2 }}
-              row
-              value={extensionConfig.authMethod}
-              onChange={(e: any) => setExtensionConfig({ ...extensionConfig, authMethod: e.target.value })}
-            >
-              <FormControlLabel
-                disabled={isButtonLoading}
-                value={AUTH_BASIC}
-                control={<Radio />}
-                label="Basic"
-              />
-              <FormControlLabel
-                disabled={isButtonLoading}
-                value={AUTH_CONNECTION_STRING}
-                control={<Radio />}
-                label="Connection String"
-              />
-            </RadioGroup>
-            {extensionConfig.authMethod === AUTH_BASIC ? (
-              <>
-                <Stack direction="row" justifyContent="center" alignItems="center" spacing={0}>
+            <Stack direction="column" justifyContent="center" alignItems="center" spacing={2} mt={2}>
+              <RadioGroup
+                row
+                value={extensionConfig.authMethod}
+                onChange={(e: any) => setExtensionConfig({ ...extensionConfig, authMethod: e.target.value })}
+              >
+                <FormControlLabel
+                  disabled={isButtonLoading}
+                  value={AUTH_BASIC}
+                  control={<Radio />}
+                  label="Basic"
+                />
+                <FormControlLabel
+                  disabled={isButtonLoading}
+                  value={AUTH_CONNECTION_STRING}
+                  control={<Radio />}
+                  label="Connection String"
+                />
+              </RadioGroup>
+              {extensionConfig.authMethod === AUTH_BASIC ? (
+                <>
+                  <Stack direction="row" justifyContent="center" alignItems="center" spacing={0}>
+                    <TextField
+                      disabled={isButtonLoading}
+                      margin="normal"
+                      fullWidth
+                      label="Hostname"
+                      value={extensionConfig.hostname}
+                      required
+                      autoFocus
+                      onChange={(e: any) => setExtensionConfig({ ...extensionConfig, hostname: e.target.value })}
+                    />
+                    <TextField
+                      disabled={isButtonLoading}
+                      margin="normal"
+                      label="Port"
+                      type="number"
+                      value={extensionConfig.port}
+                      required
+                      onChange={(e: any) => setExtensionConfig({ ...extensionConfig, port: e.target.value })}
+                    />
+                  </Stack>
                   <TextField
                     disabled={isButtonLoading}
                     margin="normal"
                     fullWidth
-                    label="Hostname"
-                    value={extensionConfig.hostname}
-                    required
-                    autoFocus
-                    onChange={(e: any) => setExtensionConfig({ ...extensionConfig, hostname: e.target.value })}
+                    key="username"
+                    label="Username"
+                    value={extensionConfig.username}
+                    onChange={(e: any) => setExtensionConfig({ ...extensionConfig, username: e.target.value })}
                   />
                   <TextField
                     disabled={isButtonLoading}
                     margin="normal"
-                    label="Port"
-                    type="number"
-                    value={extensionConfig.port}
-                    required
-                    onChange={(e: any) => setExtensionConfig({ ...extensionConfig, port: e.target.value })}
+                    fullWidth
+                    key="password"
+                    label="Password"
+                    type="password"
+                    value={extensionConfig.password}
+                    onChange={(e: any) => setExtensionConfig({ ...extensionConfig, password: e.target.value })}
                   />
-                </Stack>
+                </>
+              ) : (
                 <TextField
                   disabled={isButtonLoading}
                   margin="normal"
                   fullWidth
-                  key="username"
-                  label="Username"
-                  value={extensionConfig.username}
-                  onChange={(e: any) => setExtensionConfig({ ...extensionConfig, username: e.target.value })}
+                  key="connectionString"
+                  label="Connection String"
+                  value={extensionConfig.connectionString}
+                  onChange={(e: any) => setExtensionConfig({ ...extensionConfig, connectionString: e.target.value })}
                 />
-                <TextField
+              )}
+              <Stack direction="row" justifyContent="center" alignItems="center" spacing={0} mt={2}>
+                <FormControlLabel
                   disabled={isButtonLoading}
-                  margin="normal"
-                  fullWidth
-                  key="password"
-                  label="Password"
-                  type="password"
-                  value={extensionConfig.password}
-                  onChange={(e: any) => setExtensionConfig({ ...extensionConfig, password: e.target.value })}
+                  label="Remember this connection"
+                  control={<Checkbox
+                    checked={extensionConfig.rememberCredentials}
+                    onChange={(e: any) => setExtensionConfig({ ...extensionConfig, rememberCredentials: e.target.checked })}
+                  />}
                 />
-              </>
-            ) : (
-              <TextField
-                disabled={isButtonLoading}
-                margin="normal"
+                <Link
+                  href="#"
+                  onClick={HandleResetCredentials}
+                  variant="body2"
+                >
+                  {"Reset saved credentials"}
+                </Link>
+              </Stack>
+              <LoadingButton
                 fullWidth
-                key="connectionString"
-                label="Connection String"
-                value={extensionConfig.connectionString}
-                onChange={(e: any) => setExtensionConfig({ ...extensionConfig, connectionString: e.target.value })}
-              />
-            )}
-            <Stack direction="row" justifyContent="center" alignItems="center" spacing={0}>
-              <FormControlLabel
-                disabled={isButtonLoading}
-                label="Remember this connection"
-                control={<Checkbox
-                  checked={extensionConfig.rememberCredentials}
-                  onChange={(e: any) => setExtensionConfig({ ...extensionConfig, rememberCredentials: e.target.checked })}
-                />}
-              />
-              <Link
-                href="#"
-                onClick={HandleResetCredentials}
-                variant="body2"
+                disabled={!credentialsNotEmpty}
+                loading={isButtonLoading}
+                type="submit"
+                variant="contained"
+                onClick={HandleConnect}
               >
-                {"Reset saved credentials"}
-              </Link>
+                Connect
+              </LoadingButton>
             </Stack>
-            <LoadingButton
-              sx={{ width: '100%' }}
-              disabled={!credentialsNotEmpty}
-              loading={isButtonLoading}
-              type="submit"
-              variant="contained"
-              onClick={HandleConnect}
-            >
-              Connect
-            </LoadingButton>
           </>
         )}
       </Box>
