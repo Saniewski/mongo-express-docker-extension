@@ -2,7 +2,7 @@ import { Box, Grid, LinearProgress, Typography } from "@mui/material";
 import React, { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { ddToast } from "../api/utils";
-import { checkMongoExpressStatus, removeMongoExpress, startMongoExpress } from "../api/docker";
+import { checkIfMongoExpressIsUp, removeMongoExpress, startMongoExpress } from "../api/docker";
 import { ServiceUnavailable } from "../components/ServiceUnavailable/ServiceUnavailable";
 import { ExtensionConfig } from "../types/ExtensionConfig";
 
@@ -26,25 +26,29 @@ export const MongoExpressPage = () => {
               ddToast.error('Mongo Express failed to start after 30 seconds.');
               setLoading(false);
             }
-            checkMongoExpressStatus()
+            checkIfMongoExpressIsUp()
               .then((status) => {
+                console.log('Mongo Express status: ', status);
                 if (status === 'up') {
                   setReady(true);
                   setLoading(false);
                   document.body.classList.add('full-screen-body');
                   document.getElementById('root')?.classList.add('full-screen-root');
                   clearInterval(timer);
+                } else if (status === 'exited') {
+                  setLoading(false);
+                  clearInterval(timer);
                 }
                 retries--;
               })
               .catch((error) => {
-                ddToast.error(error.toString());
+                ddToast.error(error.stderr);
               });
           }, 1000);
         })
         .catch((error) => {
-          console.error(error.toString());
-          ddToast.error(error.toString());
+          console.error(error);
+          ddToast.error(error.stderr);
           setLoading(false);
         });
     }
@@ -56,7 +60,7 @@ export const MongoExpressPage = () => {
           document.getElementById('root')?.classList.remove('full-screen-root');
         })
         .catch((error) => {
-          ddToast.error(error.toString());
+          ddToast.error(error.stderr);
         });
     };
   }, []);

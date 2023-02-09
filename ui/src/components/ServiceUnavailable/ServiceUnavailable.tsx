@@ -22,8 +22,8 @@ export const ServiceUnavailable = () => {
         <Avatar sx={{ m: 1, width: 60, height: 60 }} alt="Mongo Express Logo" src={mongoExpressLogo} />
         <Typography variant="h5">Service Unavailable</Typography>
         <Typography variant="body1" color="text.secondary" mt={2} align="justify">
-          Please, make sure the credentials are correct or try again after restarting / reinstalling the extension.<br />
-          If the problem persists, please create an issue on the extension's GitHub page.
+          Please, make sure the credentials are correct or try again after restarting / reinstalling
+          the extension.<br />If the problem persists, please create an issue on the extension's GitHub page.
         </Typography>
         <Stack direction="row" spacing={2} mt={2}>
           <Button
