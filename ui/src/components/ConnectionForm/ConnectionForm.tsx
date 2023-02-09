@@ -63,7 +63,7 @@ export const ConnectionForm = () => {
         ddToast.success('Credentials reset.');
       })
       .catch((error) => {
-        ddToast.error(error.toString());
+        ddToast.error(error.stderr);
       });
   };
 
@@ -75,8 +75,8 @@ export const ConnectionForm = () => {
         }
       })
       .catch((error) => {
-        console.error(error.toString());
-        ddToast.error(error.toString());
+        console.error(error);
+        ddToast.error(error.stderr);
       })
       .finally(() => {
         setLoading(false);
@@ -106,7 +106,8 @@ export const ConnectionForm = () => {
             <Typography variant="h5">Connect to MongoDB</Typography>
             <Link
               href="#"
-              onClick={() => ddClient?.host?.openExternal('https://www.mongodb.com/docs/manual/reference/connection-string/')}
+              onClick={() =>
+                ddClient?.host?.openExternal('https://www.mongodb.com/docs/manual/reference/connection-string/')}
               variant="body2"
             >
               {"Get help connecting to MongoDB"}
@@ -182,7 +183,8 @@ export const ConnectionForm = () => {
                   key="connectionString"
                   label="Connection String"
                   value={extensionConfig.connectionString}
-                  onChange={(e: any) => setExtensionConfig({ ...extensionConfig, connectionString: e.target.value })}
+                  onChange={(e: any) =>
+                    setExtensionConfig({ ...extensionConfig, connectionString: e.target.value })}
                 />
               )}
               <Stack direction="row" justifyContent="center" alignItems="center" spacing={0} mt={2}>
@@ -191,7 +193,8 @@ export const ConnectionForm = () => {
                   label="Remember this connection"
                   control={<Checkbox
                     checked={extensionConfig.rememberCredentials}
-                    onChange={(e: any) => setExtensionConfig({ ...extensionConfig, rememberCredentials: e.target.checked })}
+                    onChange={(e: any) =>
+                      setExtensionConfig({ ...extensionConfig, rememberCredentials: e.target.checked })}
                   />}
                 />
                 <Link

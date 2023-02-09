@@ -11,7 +11,7 @@ export const SaveConfig = async (extensionConfig: ExtensionConfig): Promise<bool
     await saveExtensionConfig(extensionConfig);
     return true;
   } catch (error: any) {
-    ddToast.error(error.toString());
+    ddToast.error(error.stderr);
     return false;
   }
 };
