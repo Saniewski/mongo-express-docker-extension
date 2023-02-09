@@ -1,4 +1,4 @@
-**Pull Request Type**
+**Pull request subject**
 - [ ] Feature
 - [ ] Bugfix
 - [ ] Code style update (formatting, renaming)
