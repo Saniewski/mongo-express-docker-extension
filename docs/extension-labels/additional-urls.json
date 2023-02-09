@@ -1,0 +1,14 @@
+[
+  {
+    "title": "Documentation",
+    "url": "https://github.com/Saniewski/mongo-express-docker-extension/blob/main/README.md"
+  },
+  {
+    "title": "Changelog",
+    "url": "https://github.com/Saniewski/mongo-express-docker-extension/releases"
+  },
+  {
+    "title": "License",
+    "url": "https://github.com/Saniewski/mongo-express-docker-extension/blob/main/LICENSE"
+  }
+]

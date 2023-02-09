@@ -6,8 +6,19 @@ BUILDER=buildx-multi-arch
 INFO_COLOR = \033[0;36m
 NO_COLOR   = \033[m
 
+ADDITIONAL_URLS = $(shell cat ./docs/extension-labels/additional-urls.json)
+CHANGELOG = $(shell cat ./docs/extension-labels/changelog.html)
+DETAILED_DESCRIPTION = $(shell cat ./docs/extension-labels/detailed-description.html)
+SCREENSHOTS = $(shell cat ./docs/extension-labels/screenshots.json)
+
 build-extension: ## Build service image to be deployed as a desktop extension
-	docker build --tag=$(IMAGE):$(TAG) .
+	docker build \
+	--tag=$(IMAGE):$(TAG) \
+	--label com.docker.extension.additional-urls='$(ADDITIONAL_URLS)' \
+	--label com.docker.extension.changelog='$(CHANGELOG)' \
+	--label com.docker.extension.detailed-description='$(DETAILED_DESCRIPTION)' \
+	--label com.docker.extension.screenshots='$(SCREENSHOTS)' \
+	.
 
 install-extension: build-extension ## Install the extension
 	docker extension install $(IMAGE):$(TAG)
