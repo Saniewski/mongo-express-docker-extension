@@ -23,13 +23,23 @@ COPY ui /ui
 RUN npm run build
 
 FROM alpine
+
+ARG ADDITIONAL_URLS
+ARG CHANGELOG
+ARG DETAILED_DESCRIPTION
+ARG SCREENSHOTS
+
 LABEL \
-    org.opencontainers.image.title="Mongo Express Docker Extension" \
+    org.opencontainers.image.title="Mongo Express" \
     org.opencontainers.image.description="Run Mongo Express in Docker Desktop and connect to any MongoDB server." \
     org.opencontainers.image.vendor="Pawel Saniewski" \
     com.docker.desktop.extension.api.version="0.3.0" \
-    com.docker.extension.categories="database,utility-tools" \
     com.docker.desktop.extension.icon="https://raw.githubusercontent.com/Saniewski/mongo-express-docker-extension/main/favicon.ico" \
+    com.docker.extension.additional-urls=$ADDITIONAL_URLS \
+    com.docker.extension.changelog=$CHANGELOG \
+    com.docker.extension.detailed-description=$DETAILED_DESCRIPTION \
+    com.docker.extension.screenshots=$SCREENSHOTS \
+    com.docker.extension.categories="database,utility-tools" \
     com.docker.extension.publisher-url="https://github.com/Saniewski/mongo-express-docker-extension"
 
 COPY --from=builder /backend/bin/service /

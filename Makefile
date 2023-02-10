@@ -1,5 +1,8 @@
 IMAGE?=saniewski/mongo-express-docker-extension
-TAG?=latest
+TAG_LATEST?=latest
+TAG_MAJOR?=1
+TAG_MINOR?=1.0
+TAG_PATCH?=1.0.2
 
 BUILDER=buildx-multi-arch
 
@@ -13,18 +16,21 @@ SCREENSHOTS = $(shell cat ./docs/extension-labels/screenshots.json)
 
 build-extension: ## Build service image to be deployed as a desktop extension
 	docker build \
-	--tag=$(IMAGE):$(TAG) \
-	--label com.docker.extension.additional-urls='$(ADDITIONAL_URLS)' \
-	--label com.docker.extension.changelog='$(CHANGELOG)' \
-	--label com.docker.extension.detailed-description='$(DETAILED_DESCRIPTION)' \
-	--label com.docker.extension.screenshots='$(SCREENSHOTS)' \
-	.
+		--tag=$(IMAGE):$(TAG_LATEST) \
+		--tag=$(IMAGE):$(TAG_MAJOR) \
+		--tag=$(IMAGE):$(TAG_MINOR) \
+		--tag=$(IMAGE):$(TAG_PATCH) \
+		--build-arg ADDITIONAL_URLS='$(ADDITIONAL_URLS)' \
+		--build-arg CHANGELOG='$(CHANGELOG)' \
+		--build-arg DETAILED_DESCRIPTION='$(DETAILED_DESCRIPTION)' \
+		--build-arg SCREENSHOTS='$(SCREENSHOTS)' \
+		.
 
 install-extension: build-extension ## Install the extension
-	docker extension install $(IMAGE):$(TAG)
+	docker extension install $(IMAGE):$(TAG_PATCH)
 
 update-extension: build-extension ## Update the extension
-	docker extension update $(IMAGE):$(TAG)
+	docker extension update $(IMAGE):$(TAG_PATCH)
 
 use-devtools: ## Use DevTools inside the Docker Desktop extension
 	docker extension dev debug ${IMAGE}
@@ -38,8 +44,17 @@ reset-dev: ## Resets any development settings changes
 prepare-buildx: ## Create buildx builder for multi-arch build, if not exists
 	docker buildx inspect $(BUILDER) || docker buildx create --name=$(BUILDER) --driver=docker-container --driver-opt=network=host
 
-push-extension: prepare-buildx ## Build & Upload extension image to hub. Do not push if tag already exists: make push-extension tag=0.1
-	docker pull $(IMAGE):$(TAG) && echo "Failure: Tag already exists" || docker buildx build --push --builder=$(BUILDER) --platform=linux/amd64,linux/arm64 --build-arg TAG=$(TAG) --tag=$(IMAGE):$(TAG) .
+push-extension: prepare-buildx ## Build & upload extension image to hub.
+	docker buildx build --push --builder=$(BUILDER) --platform=linux/amd64,linux/arm64 \
+		--tag=$(IMAGE):$(TAG_LATEST) \
+		--tag=$(IMAGE):$(TAG_MAJOR) \
+		--tag=$(IMAGE):$(TAG_MINOR) \
+		--tag=$(IMAGE):$(TAG_PATCH) \
+		--build-arg ADDITIONAL_URLS='$(ADDITIONAL_URLS)' \
+		--build-arg CHANGELOG='$(CHANGELOG)' \
+		--build-arg DETAILED_DESCRIPTION='$(DETAILED_DESCRIPTION)' \
+		--build-arg SCREENSHOTS='$(SCREENSHOTS)' \
+		.
 
 help: ## Show this help
 	@echo Please specify a build target. The choices are:
