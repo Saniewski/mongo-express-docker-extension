@@ -16,7 +16,7 @@ https://open.docker.com/extensions/marketplace?extensionId=saniewski/mongo-expre
 
 Alternatively, you can install it manually by running the following command in your terminal:
 ```bash
-docker extension install saniewski/mongo-express-docker-extension:latest
+docker extension install saniewski/mongo-express-docker-extension:1.0.2
 ```
 
 ## Usage
