@@ -1,5 +1,5 @@
 **Release checklist:**
-- [ ] Title should be in the form of: v1.2.3 - Release date (YYYY-MM-DD)
+- [ ] Title should be in the form of: v1.2.3 - Release date (DD MMM YYYY)
 - [ ] Title should not be included in the release description
 - [ ] Update the version number in the `package.json` file
 - [ ] Update the version number in the `Makefile`
