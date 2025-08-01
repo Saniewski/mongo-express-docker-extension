@@ -1,6 +1,6 @@
 import { Box, Grid, LinearProgress, Typography } from "@mui/material";
-import React, { useEffect, useState } from "react";
-import { useLocation } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useLocation } from "react-router";
 import { ddToast } from "../api/utils";
 import { checkIfMongoExpressIsUp, removeMongoExpress, startMongoExpress } from "../api/docker";
 import { ServiceUnavailable } from "../components/ServiceUnavailable/ServiceUnavailable";
@@ -27,15 +27,15 @@ export const MongoExpressPage = () => {
               setLoading(false);
             }
             checkIfMongoExpressIsUp()
-              .then((status) => {
-                console.log('Mongo Express status: ', status);
-                if (status === 'up') {
+              .then((isUp) => {
+                console.log(isUp ? 'Mongo Express is up' : 'Mongo Express is down');
+                if (isUp) {
                   setReady(true);
                   setLoading(false);
                   document.body.classList.add('full-screen-body');
                   document.getElementById('root')?.classList.add('full-screen-root');
                   clearInterval(timer);
-                } else if (status === 'exited') {
+                } else {
                   setLoading(false);
                   clearInterval(timer);
                 }
@@ -63,7 +63,7 @@ export const MongoExpressPage = () => {
           ddToast.error(error.stderr);
         });
     };
-  }, []);
+  }, [extensionConfig, isLoading]);
 
   return (
     <>

@@ -3,12 +3,13 @@ package main
 import (
 	"flag"
 	"fmt"
-	"gopkg.in/yaml.v3"
 	"net"
 	"net/http"
 	"os"
 
-	"github.com/labstack/echo"
+	"gopkg.in/yaml.v3"
+
+	"github.com/labstack/echo/v4"
 	"github.com/sirupsen/logrus"
 )
 

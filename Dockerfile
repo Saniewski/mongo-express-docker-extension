@@ -1,26 +1,28 @@
-FROM golang:1.19-alpine AS builder
+FROM golang:1.24-alpine AS builder
 ENV CGO_ENABLED=0
 WORKDIR /backend
-COPY vm/go.* .
+COPY backend/go.* .
 RUN --mount=type=cache,target=/go/pkg/mod \
     --mount=type=cache,target=/root/.cache/go-build \
     go mod download
-COPY vm/. .
+COPY backend/. .
 RUN --mount=type=cache,target=/go/pkg/mod \
     --mount=type=cache,target=/root/.cache/go-build \
     go build -trimpath -ldflags="-s -w" -o bin/service
 
-FROM --platform=$BUILDPLATFORM node:18.9-alpine3.15 AS client-builder
-WORKDIR /ui
-# cache packages in layer
-COPY ui/package.json /ui/package.json
-COPY ui/package-lock.json /ui/package-lock.json
-RUN --mount=type=cache,target=/usr/src/app/.npm \
-    npm set cache /usr/src/app/.npm && \
-    npm ci
-# install
+FROM --platform=$BUILDPLATFORM node:24-alpine AS client-base
+ENV PNPM_HOME="/pnpm"
+ENV PATH="$PNPM_HOME:$PATH"
+RUN corepack enable
 COPY ui /ui
-RUN npm run build
+WORKDIR /ui
+
+FROM client-base AS prod-deps
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --prod --frozen-lockfile
+
+FROM client-base AS client-builder
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
+RUN pnpm run build
 
 FROM alpine
 
@@ -49,5 +51,7 @@ COPY \
     mongo-express-logo.svg \
     extension-config.yaml \
     ./
+
+COPY --from=prod-deps /ui/node_modules /ui/node_modules
 COPY --from=client-builder /ui/build /ui
 CMD /service -socket /run/guest-services/mongo-express-docker-extension.sock

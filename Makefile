@@ -3,7 +3,6 @@ TAG_LATEST?=latest
 TAG_MAJOR?=1
 TAG_MINOR?=1.0
 TAG_PATCH?=1.0.2
-
 BUILDER=buildx-multi-arch
 
 INFO_COLOR = \033[0;36m
@@ -31,6 +30,9 @@ install-extension: build-extension ## Install the extension
 
 update-extension: build-extension ## Update the extension
 	docker extension update $(IMAGE):$(TAG_PATCH)
+
+remove-extension: ## Remove the extension
+	docker extension rm $(IMAGE):$(TAG_PATCH)
 
 use-devtools: ## Use DevTools inside the Docker Desktop extension
 	docker extension dev debug ${IMAGE}

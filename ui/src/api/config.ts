@@ -1,7 +1,7 @@
 import { ddClient } from "./utils";
 import { ExtensionConfig } from "../types/ExtensionConfig";
 
-export class ApiResponse {
+type ApiResponse = {
   error: boolean;
   message: string;
   data: ExtensionConfig;
@@ -31,20 +31,20 @@ export async function saveExtensionConfig(config: ExtensionConfig): Promise<Exte
 
 async function getConfig(): Promise<ApiResponse | Error> {
   return ddClient.extension.vm?.service?.get('/config')
-    .then((response: ApiResponse) => {
-      return response;
+    .then((value: unknown): ApiResponse => {
+      return value as ApiResponse;
     })
     .catch((error: Error) => {
       return error;
-    });
+    }) || new Error('Failed to get configuration');
 }
 
 async function saveConfig(config: ExtensionConfig): Promise<ApiResponse | Error> {
   return ddClient.extension.vm?.service?.post('/config', config)
-    .then((response: ApiResponse) => {
-      return response;
+    .then((value: unknown) => {
+      return value as ApiResponse;
     })
     .catch((error: Error) => {
       return error;
-    });
+    }) || new Error('Failed to save configuration');
 }

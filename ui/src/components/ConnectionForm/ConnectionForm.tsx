@@ -1,6 +1,6 @@
 import mongoExpressLogo from '../../assets/mongo-express-logo.png';
 import { ExtensionConfig } from "../../types/ExtensionConfig";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Avatar,
   Box,
@@ -20,7 +20,7 @@ import { AUTH_BASIC, AUTH_CONNECTION_STRING } from "../../utils/constants";
 import { ddClient, ddToast } from "../../api/utils";
 import { LoadConfig, ResetConfig, SaveConfig } from '../../utils/config';
 import { LoadingButton } from "@mui/lab";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 
 export const ConnectionForm = () => {
   const [extensionConfig, setExtensionConfig] = useState<ExtensionConfig>({ authMethod: AUTH_BASIC });

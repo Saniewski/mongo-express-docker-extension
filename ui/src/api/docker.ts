@@ -9,14 +9,16 @@ export async function startMongoExpress(config: ExtensionConfig): Promise<void> 
   /*
   docker run \
   --network some-network \
-  -e ME_CONFIG_MONGODB_URL=mongo://admin:secret@some-mongo:27017 \
+  -e ME_CONFIG_MONGODB_URL=mongodb://admin:secret@some-mongo:27017 \
   --rm -p 8081:8081 \
   --name dd-ext-mongo-express \
   mongo-express:latest
    */
   await removeMongoExpress();
+  
   let cliArgs = [];
   let hostname = config.hostname;
+
   if (config.connectionString) {
     cliArgs.push('-e', `"ME_CONFIG_MONGODB_URL=${config.connectionString}"`);
     const pattern =
@@ -25,7 +27,7 @@ export async function startMongoExpress(config: ExtensionConfig): Promise<void> 
     const match = config.connectionString.match(pattern);
     if (match) {
       const { groups } = match;
-      if (groups.hostname) {
+      if (groups?.hostname) {
         hostname = groups.hostname;
       }
     }
@@ -35,10 +37,14 @@ export async function startMongoExpress(config: ExtensionConfig): Promise<void> 
   } else {
     cliArgs.push('-e', `ME_CONFIG_MONGODB_URL=mongodb://${config.hostname}:${config.port}`);
   }
+
   const localMongoContainerNameAndNetwork = await getLocalMongoContainerNameAndNetwork();
-  if (localMongoContainerNameAndNetwork && localMongoContainerNameAndNetwork[0].includes(hostname)) {
+  alert(localMongoContainerNameAndNetwork);
+  alert(hostname);
+  if (localMongoContainerNameAndNetwork && hostname && localMongoContainerNameAndNetwork[0].includes(hostname)) {
     cliArgs.push('--network', localMongoContainerNameAndNetwork[1])
   }
+  
   cliArgs.push(
     // '-e', 'ME_CONFIG_MONGODB_ENABLE_ADMIN=true',
     // '--rm',
@@ -47,13 +53,14 @@ export async function startMongoExpress(config: ExtensionConfig): Promise<void> 
     '--name', MONGO_EXPRESS_CONTAINER_NAME,
     'mongo-express:latest'
   );
+  
   await ddClient.docker?.cli?.exec('run', cliArgs);
 }
 
 /**
  * Returns container name and network name of a local docker container running mongo if it's present, otherwise null.
  */
-export async function getLocalMongoContainerNameAndNetwork(): Promise<[string, string]> {
+export async function getLocalMongoContainerNameAndNetwork(): Promise<[string, string] | undefined> {
   // docker ps -a --filter status=running --format "{{.ID}} {{.Names}} {{.Image}} {{.Networks}}"
   const psResult = await ddClient.docker?.cli?.exec('ps', [
     '-a',
@@ -76,31 +83,28 @@ export async function getLocalMongoContainerNameAndNetwork(): Promise<[string, s
       }
     }
   }
-  return null;
+  return undefined;
 }
 
 /**
  * Checks if the mongo-express container is running.
  */
-export async function checkIfMongoExpressIsUp(): Promise<string> {
+export async function checkIfMongoExpressIsUp(): Promise<boolean> {
   const status = await getMongoExpressStatus();
-  if (status.toLowerCase().includes('exited')) {
-    return 'exited';
-  }
-  if (status.toLowerCase().includes('up')) {
+  if (status?.toLowerCase().includes('up')) {
     const logs = await getMongoExpressLogs();
     console.dir(logs);
     if (logs.includes(MONGO_EXPRESS_CONNECTION_SUCCESSFUL_MESSAGE)) {
-      return 'up';
+      return true;
     }
   }
-  return null;
+  return false;
 }
 
 /**
- * Checks if the mongo-express container is running.
+ * Gets the mongo-express container status.
  */
-export async function getMongoExpressStatus(): Promise<string> {
+export async function getMongoExpressStatus(): Promise<string | undefined> {
   // docker ps -a --filter name=dd-ext-mongo-express --format "{{.Status}}"
   const psResult = await ddClient.docker?.cli?.exec('ps', [
     '-a',
@@ -111,7 +115,7 @@ export async function getMongoExpressStatus(): Promise<string> {
   if (lines.length > 0) {
     return lines[0];
   }
-  return null;
+  return undefined;
 }
 
 /**
