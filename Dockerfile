@@ -1,16 +1,16 @@
-FROM golang:1.19-alpine AS builder
+FROM golang:1.24-alpine AS builder
 ENV CGO_ENABLED=0
 WORKDIR /backend
-COPY vm/go.* .
+COPY backend/go.* .
 RUN --mount=type=cache,target=/go/pkg/mod \
     --mount=type=cache,target=/root/.cache/go-build \
     go mod download
-COPY vm/. .
+COPY backend/. .
 RUN --mount=type=cache,target=/go/pkg/mod \
     --mount=type=cache,target=/root/.cache/go-build \
     go build -trimpath -ldflags="-s -w" -o bin/service
 
-FROM --platform=$BUILDPLATFORM node:18.9-alpine3.15 AS client-builder
+FROM --platform=$BUILDPLATFORM node:24-alpine3.15 AS client-builder
 WORKDIR /ui
 # cache packages in layer
 COPY ui/package.json /ui/package.json
