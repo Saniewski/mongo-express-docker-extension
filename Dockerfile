@@ -13,14 +13,10 @@ RUN --mount=type=cache,target=/go/pkg/mod \
 FROM --platform=$BUILDPLATFORM node:24-alpine3.15 AS client-builder
 WORKDIR /ui
 # cache packages in layer
-COPY ui/package.json /ui/package.json
-COPY ui/package-lock.json /ui/package-lock.json
-RUN --mount=type=cache,target=/usr/src/app/.npm \
-    npm set cache /usr/src/app/.npm && \
-    npm ci
-# install
-COPY ui /ui
-RUN npm run build
+COPY package.json pnpm-lock.yaml ./
+RUN corepack enable && pnpm install --frozen-lockfile
+COPY . /ui
+RUN pnpm run build
 
 FROM alpine
 
