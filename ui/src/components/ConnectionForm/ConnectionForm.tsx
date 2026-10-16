@@ -39,16 +39,18 @@ export const ConnectionForm = () => {
 
   const HandleConnect = async () => {
     setButtonLoading(true);
-    if (extensionConfig.authMethod === AUTH_BASIC) {
-      extensionConfig.connectionString = "";
-    } else {
-      extensionConfig.hostname = "";
-      extensionConfig.port = 0;
-      extensionConfig.username = "";
-      extensionConfig.password = "";
-    }
-    if (extensionConfig.rememberCredentials) {
-      const savingResult = await SaveConfig(extensionConfig);
+    const configToConnect =
+      extensionConfig.authMethod === AUTH_BASIC
+        ? { ...extensionConfig, connectionString: "" }
+        : {
+            ...extensionConfig,
+            hostname: "",
+            port: 0,
+            username: "",
+            password: "",
+          };
+    if (configToConnect.rememberCredentials) {
+      const savingResult = await SaveConfig(configToConnect);
       if (!savingResult) {
         setButtonLoading(false);
         ddToast.error("Failed to save credentials");
@@ -56,7 +58,7 @@ export const ConnectionForm = () => {
     }
     navigate("/mongo-express", {
       state: {
-        extensionConfig: extensionConfig,
+        extensionConfig: configToConnect,
       },
     });
   };
@@ -133,7 +135,7 @@ export const ConnectionForm = () => {
               <RadioGroup
                 row
                 value={extensionConfig.authMethod}
-                onChange={(e: any) =>
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                   setExtensionConfig({ ...extensionConfig, authMethod: e.target.value })
                 }
               >
@@ -165,7 +167,7 @@ export const ConnectionForm = () => {
                       value={extensionConfig.hostname}
                       required
                       autoFocus
-                      onChange={(e: any) =>
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                         setExtensionConfig({ ...extensionConfig, hostname: e.target.value })
                       }
                     />
@@ -176,8 +178,8 @@ export const ConnectionForm = () => {
                       type="number"
                       value={extensionConfig.port}
                       required
-                      onChange={(e: any) =>
-                        setExtensionConfig({ ...extensionConfig, port: e.target.value })
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                        setExtensionConfig({ ...extensionConfig, port: Number(e.target.value) })
                       }
                     />
                   </Stack>
@@ -188,7 +190,7 @@ export const ConnectionForm = () => {
                     key="username"
                     label="Username"
                     value={extensionConfig.username}
-                    onChange={(e: any) =>
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                       setExtensionConfig({ ...extensionConfig, username: e.target.value })
                     }
                   />
@@ -200,7 +202,7 @@ export const ConnectionForm = () => {
                     label="Password"
                     type="password"
                     value={extensionConfig.password}
-                    onChange={(e: any) =>
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                       setExtensionConfig({ ...extensionConfig, password: e.target.value })
                     }
                   />
@@ -213,7 +215,7 @@ export const ConnectionForm = () => {
                   key="connectionString"
                   label="Connection String"
                   value={extensionConfig.connectionString}
-                  onChange={(e: any) =>
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                     setExtensionConfig({ ...extensionConfig, connectionString: e.target.value })
                   }
                 />
@@ -229,7 +231,7 @@ export const ConnectionForm = () => {
                   control={
                     <Checkbox
                       checked={extensionConfig.rememberCredentials}
-                      onChange={(e: any) =>
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                         setExtensionConfig({
                           ...extensionConfig,
                           rememberCredentials: e.target.checked,

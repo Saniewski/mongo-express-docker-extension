@@ -23,7 +23,7 @@ export async function startMongoExpress(config: ExtensionConfig): Promise<void> 
   if (config.connectionString) {
     cliArgs.push("-e", `"ME_CONFIG_MONGODB_URL=${config.connectionString}"`);
     const pattern =
-      "^mongodb(\\+srv)??:\\/\\/(?<credentials>(?<username>\\w+):?(?<password>\\w+)\@)?" +
+      "^mongodb(\\+srv)??:\\/\\/(?<credentials>(?<username>\\w+):?(?<password>\\w+)@)?" +
       "(?<hostname>[\\w.]+)(:(?<port>\\d+))?";
     const match = config.connectionString.match(pattern);
     if (match) {
