@@ -1,24 +1,11 @@
-FROM golang:1.24-alpine AS builder
-ENV CGO_ENABLED=0
-WORKDIR /backend
-COPY backend/go.* .
-RUN --mount=type=cache,target=/go/pkg/mod \
-    --mount=type=cache,target=/root/.cache/go-build \
-    go mod download
-COPY backend/. .
-RUN --mount=type=cache,target=/go/pkg/mod \
-    --mount=type=cache,target=/root/.cache/go-build \
-    go build -trimpath -ldflags="-s -w" -o bin/service
-
-FROM --platform=$BUILDPLATFORM node:24-alpine3.15 AS client-builder
+FROM --platform=$BUILDPLATFORM node:24-alpine AS builder
 WORKDIR /ui
-# cache packages in layer
 COPY package.json pnpm-lock.yaml ./
 RUN corepack enable && pnpm install --frozen-lockfile
 COPY . /ui
 RUN pnpm run build
 
-FROM alpine
+FROM alpine:3.22
 
 ARG ADDITIONAL_URLS
 ARG CHANGELOG
@@ -38,12 +25,8 @@ LABEL \
     com.docker.extension.categories="database,utility-tools" \
     com.docker.extension.publisher-url="https://github.com/Saniewski/mongo-express-docker-extension"
 
-COPY --from=builder /backend/bin/service /
-COPY \
-    docker-compose.yaml \
-    metadata.json \
-    mongo-express-logo.svg \
-    extension-config.yaml \
-    ./
-COPY --from=client-builder /ui/build /ui
-CMD /service -socket /run/guest-services/mongo-express-docker-extension.sock
+COPY docker-compose.yaml metadata.json mongo-express-logo.svg ./
+COPY --from=builder /ui/build /ui
+
+# The extension image is kept alive for Docker Desktop to serve the bundled UI. It has no API service.
+CMD ["tail", "-f", "/dev/null"]

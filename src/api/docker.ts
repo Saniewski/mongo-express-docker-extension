@@ -1,155 +1,276 @@
 import { ddClient } from "./utils";
-import { ExtensionConfig } from "../types/ExtensionConfig";
-import {
-  MONGO_EXPRESS_CONTAINER_NAME,
-  MONGO_EXPRESS_CONNECTION_SUCCESSFUL_MESSAGE,
-} from "../utils/constants";
+import { MongoConnection } from "../types/MongoConnection";
+
+const MONGO_EXPRESS_IMAGE = "mongo-express:latest";
+const MONGO_EXPRESS_PORT = 8081;
+const OWNER_LABEL = "com.saniewski.mongo-express-docker-extension";
+const CONNECTION_LABEL = `${OWNER_LABEL}.connection-id`;
+const CONNECTION_SUCCESSFUL_MESSAGE = "Mongo Express server listening";
 
 /**
- * Removes the existing mongo-express container and starts a new one with a provided configuration.
+ * Starts an isolated Mongo Express container for a connection and returns its host port.
+ * Containers are created lazily, only when the user opens a saved connection.
  */
-export async function startMongoExpress(config: ExtensionConfig): Promise<void> {
-  /*
-  docker run \
-  --network some-network \
-  -e ME_CONFIG_MONGODB_URL=mongo://admin:secret@some-mongo:27017 \
-  --rm -p 8081:8081 \
-  --name dd-ext-mongo-express \
-  mongo-express:latest
-   */
-  await removeMongoExpress();
-  const cliArgs = [];
-  let hostname = config.hostname ?? "";
-  if (config.connectionString) {
-    cliArgs.push("-e", `"ME_CONFIG_MONGODB_URL=${config.connectionString}"`);
-    const pattern =
-      "^mongodb(\\+srv)??:\\/\\/(?<credentials>(?<username>\\w+):?(?<password>\\w+)@)?" +
-      "(?<hostname>[\\w.]+)(:(?<port>\\d+))?";
-    const match = config.connectionString.match(pattern);
-    if (match) {
-      const matchedHostname = match.groups?.hostname;
-      if (matchedHostname) {
-        hostname = matchedHostname;
-      }
-    }
-  } else if (config.username && config.password) {
-    cliArgs.push(
-      "-e",
-      `ME_CONFIG_MONGODB_URL=mongodb://${config.username}:${config.password}@${config.hostname}:${config.port}`,
-    );
-  } else {
-    cliArgs.push("-e", `ME_CONFIG_MONGODB_URL=mongodb://${config.hostname}:${config.port}`);
-  }
-  const localMongoContainerNameAndNetwork = await getLocalMongoContainerNameAndNetwork();
-  if (
-    localMongoContainerNameAndNetwork &&
-    localMongoContainerNameAndNetwork[0].includes(hostname)
-  ) {
-    cliArgs.push("--network", localMongoContainerNameAndNetwork[1]);
-  }
-  cliArgs.push(
-    // '-e', 'ME_CONFIG_MONGODB_ENABLE_ADMIN=true',
-    // '--rm',
+export async function startMongoExpress(
+  connection: MongoConnection,
+  launchId: string,
+): Promise<number> {
+  const containerName = getContainerName(connection.id, launchId);
+  await removeContainer(containerName);
+
+  const target = await resolveMongoTarget(connection);
+  const args = [
+    "run",
     "-d",
-    "-p",
-    "8081:8081",
     "--name",
-    MONGO_EXPRESS_CONTAINER_NAME,
-    "mongo-express:latest",
-  );
-  await ddClient.docker?.cli?.exec("run", cliArgs);
+    containerName,
+    "--label",
+    `${OWNER_LABEL}=true`,
+    "--label",
+    `${CONNECTION_LABEL}=${connection.id}`,
+    "-p",
+    `127.0.0.1::${MONGO_EXPRESS_PORT}`,
+    "-e",
+    `ME_CONFIG_MONGODB_URL=${target.url}`,
+  ];
+
+  if (target.network) args.push("--network", target.network);
+  args.push(MONGO_EXPRESS_IMAGE);
+
+  await runDocker(args);
+
+  try {
+    for (let attempt = 0; attempt < 10; attempt++) {
+      const result = await dockerExec("port", [containerName, `${MONGO_EXPRESS_PORT}/tcp`]);
+      if (result.code === 0) {
+        const port = result.stdout.match(/:(\d+)\s*$/m)?.[1];
+        if (port) return Number(port);
+      }
+      await wait(250);
+    }
+    throw new Error("Docker did not assign a host port to Mongo Express.");
+  } catch (error) {
+    await removeContainer(containerName);
+    throw error;
+  }
 }
 
-/**
- * Returns container name and network name of a local docker container running mongo if it's present, otherwise null.
- */
-export async function getLocalMongoContainerNameAndNetwork(): Promise<[string, string] | null> {
-  // docker ps -a --filter status=running --format "{{.ID}} {{.Names}} {{.Image}} {{.Networks}}"
-  const psResult = await ddClient.docker?.cli?.exec("ps", [
-    "-a",
+/** Returns up, exited, or null while the container is absent or still starting. */
+export async function checkMongoExpress(
+  connectionId: string,
+  launchId: string,
+): Promise<"up" | "exited" | null> {
+  const containerName = getContainerName(connectionId, launchId);
+  const inspect = await dockerExec("inspect", ["--format={{.State.Status}}", containerName]);
+  if (inspect.code !== 0) return null;
+
+  const status = inspect.stdout.trim().toLowerCase();
+  if (status === "exited" || status === "dead") return "exited";
+  if (status !== "running") return null;
+
+  const logs = await dockerExec("logs", [containerName]);
+  const output = `${logs.stdout}\n${logs.stderr}`;
+  return output.includes(CONNECTION_SUCCESSFUL_MESSAGE) ? "up" : null;
+}
+
+/** Stops and removes the Mongo Express container owned by a saved connection. */
+export async function removeMongoExpress(connectionId: string, launchId?: string): Promise<void> {
+  if (launchId) {
+    await removeContainer(getContainerName(connectionId, launchId));
+    return;
+  }
+
+  const result = await dockerExec("ps", [
+    "-aq",
+    "--filter",
+    `label=${CONNECTION_LABEL}=${connectionId}`,
+  ]);
+  assertSuccessful(result, "list containers for the connection");
+  const containerIds = result
+    .lines()
+    .map((line) => line.trim())
+    .filter(Boolean);
+  if (containerIds.length > 0) {
+    await runDocker(["rm", "-f", ...containerIds]);
+  }
+}
+
+/** Removes only containers carrying this extension's ownership label. */
+export async function cleanupMongoExpressContainers(): Promise<void> {
+  // Remove the fixed-name container created by releases before per-connection labels existed.
+  await removeContainer("dd-ext-mongo-express");
+
+  const result = await dockerExec("ps", ["-aq", "--filter", `label=${OWNER_LABEL}=true`]);
+  assertSuccessful(result, "list extension containers");
+
+  const containerIds = result
+    .lines()
+    .map((line) => line.trim())
+    .filter(Boolean);
+  if (containerIds.length > 0) {
+    await runDocker(["rm", "-f", ...containerIds]);
+  }
+}
+
+async function resolveMongoTarget(
+  connection: MongoConnection,
+): Promise<{ url: string; network?: string }> {
+  let url = buildMongoUrl(connection);
+  const host = getHostname(url);
+  const localMongo = await findLocalMongoContainer(host);
+
+  if (localMongo) {
+    if (localMongo.network === "bridge" && localMongo.ipAddress) {
+      url = replaceHostname(url, localMongo.ipAddress);
+    }
+    return { url, network: localMongo.network };
+  }
+
+  if (isLoopback(host)) {
+    url = replaceHostname(url, "host.docker.internal");
+  }
+  return { url };
+}
+
+function buildMongoUrl(connection: MongoConnection): string {
+  if (connection.authMethod === "connectionString") {
+    const value = connection.connectionString?.trim();
+    if (!value) throw new Error("The MongoDB connection string is empty.");
+    return value;
+  }
+
+  const hostname = connection.hostname?.trim();
+  if (!hostname) throw new Error("The MongoDB hostname is required.");
+  const port = connection.port || 27017;
+  const credentials = connection.username
+    ? `${encodeURIComponent(connection.username)}:${encodeURIComponent(connection.password ?? "")}@`
+    : "";
+  return `mongodb://${credentials}${hostname}:${port}`;
+}
+
+function getHostname(url: string): string {
+  try {
+    return new URL(url).hostname.replace(/^\[|\]$/g, "");
+  } catch {
+    return "";
+  }
+}
+
+function replaceHostname(url: string, hostname: string): string {
+  try {
+    const parsed = new URL(url);
+    parsed.hostname = hostname;
+    return parsed.toString();
+  } catch {
+    return url;
+  }
+}
+
+function isLoopback(hostname: string): boolean {
+  return hostname === "localhost" || hostname === "127.0.0.1" || hostname === "::1";
+}
+
+async function findLocalMongoContainer(
+  hostname: string,
+): Promise<{ network: string; ipAddress?: string } | null> {
+  if (!hostname) return null;
+
+  const result = await dockerExec("ps", [
     "--filter",
     "status=running",
     "--format",
-    '"{{.ID}} {{.Names}} {{.Image}} {{.Networks}}"',
+    "{{.Names}}|{{.Image}}|{{.Networks}}",
   ]);
-  const lines = psResult.lines();
-  for (const line of lines) {
-    const results = line.split(" ");
-    if (results.length === 4) {
-      const name = results[1];
-      const image = results[2].toLowerCase();
-      const network = results[3];
-      if (
-        image === "mongo" ||
-        image.startsWith("mongo:") ||
-        image === "bitnami/mongodb" ||
-        image.startsWith("bitnami/mongodb:") ||
-        image === "circleci/mongo" ||
-        image.startsWith("circleci/mongo:")
-      ) {
-        return [name, network];
-      }
-    }
+  assertSuccessful(result, "find local MongoDB containers");
+
+  for (const line of result.lines()) {
+    const [name, image = "", networks = ""] = line.split("|");
+    if (name !== hostname || !isMongoImage(image)) continue;
+
+    const network = networks.split(",")[0]?.trim();
+    if (!network) return null;
+    if (network !== "bridge") return { network };
+
+    const inspect = await dockerExec("inspect", [
+      `--format={{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}`,
+      name,
+    ]);
+    const ipAddress = inspect.stdout.trim();
+    return { network, ...(ipAddress ? { ipAddress } : {}) };
   }
   return null;
 }
 
-/**
- * Checks if the mongo-express container is running.
- */
-export async function checkIfMongoExpressIsUp(): Promise<string | null> {
-  const status = await getMongoExpressStatus();
-  if (!status) return null;
-  if (status.toLowerCase().includes("exited")) {
-    return "exited";
-  }
-  if (status.toLowerCase().includes("up")) {
-    const logs = await getMongoExpressLogs();
-    console.dir(logs);
-    if (logs.includes(MONGO_EXPRESS_CONNECTION_SUCCESSFUL_MESSAGE)) {
-      return "up";
-    }
-  }
-  return null;
+function isMongoImage(image: string): boolean {
+  const normalized = image.toLowerCase();
+  return (
+    normalized === "mongo" ||
+    normalized.startsWith("mongo:") ||
+    normalized === "bitnami/mongodb" ||
+    normalized.startsWith("bitnami/mongodb:") ||
+    normalized === "circleci/mongo" ||
+    normalized.startsWith("circleci/mongo:")
+  );
 }
 
-/**
- * Checks if the mongo-express container is running.
- */
-export async function getMongoExpressStatus(): Promise<string | null> {
-  // docker ps -a --filter name=dd-ext-mongo-express --format "{{.Status}}"
-  const psResult = await ddClient.docker?.cli?.exec("ps", [
-    "-a",
-    "--filter",
-    `name=${MONGO_EXPRESS_CONTAINER_NAME}`,
-    "--format",
-    "{{.Status}}",
-  ]);
-  const lines = psResult.lines();
-  if (lines.length > 0) {
-    return lines[0];
+function getContainerName(connectionId: string, launchId: string): string {
+  const safeConnectionId = connectionId
+    .toLowerCase()
+    .replace(/[^a-z0-9_.-]/g, "-")
+    .slice(0, 36);
+  const safeLaunchId = launchId
+    .toLowerCase()
+    .replace(/[^a-z0-9_.-]/g, "-")
+    .slice(0, 36);
+  return `dd-ext-mongo-express-${safeConnectionId}-${safeLaunchId}`;
+}
+
+async function removeContainer(containerName: string): Promise<void> {
+  // A missing container is expected when closing a connection or cleaning an old install.
+  let result;
+  try {
+    result = await dockerExec("rm", ["-f", containerName]);
+  } catch (error) {
+    if (isMissingContainerError(error)) return;
+    throw error;
   }
-  return null;
+
+  const failed = result.code !== undefined ? result.code !== 0 : !!result.stderr.trim();
+  if (failed) {
+    if (isMissingContainerError(result.stderr)) return;
+    throw new Error(result.stderr.trim() || `Failed to remove container ${containerName}.`);
+  }
 }
 
-/**
- * Returns the mongo-express container logs.
- */
-export async function getMongoExpressLogs(): Promise<string> {
-  // docker logs -t --details dd-ext-mongo-express
-  const logsResult = await ddClient.docker?.cli?.exec("logs", [
-    "-t",
-    "--details",
-    MONGO_EXPRESS_CONTAINER_NAME,
-  ]);
-  const lines = logsResult.lines();
-  return lines.join("\n");
+async function runDocker(args: string[]) {
+  const result = await dockerExec(args[0], args.slice(1));
+  assertSuccessful(result, `docker ${args.join(" ")}`);
+  return result;
 }
 
-/**
- * Removes the existing mongo-express container.
- */
-export async function removeMongoExpress(): Promise<void> {
-  // docker rm -f dd-ext-mongo-express
-  await ddClient.docker?.cli?.exec("rm", ["-f", MONGO_EXPRESS_CONTAINER_NAME]);
+function dockerExec(command: string, args: string[]) {
+  return ddClient.docker.cli.exec(command, args);
+}
+
+function assertSuccessful(result: Awaited<ReturnType<typeof dockerExec>>, operation: string): void {
+  if (result.code !== undefined && result.code !== 0) {
+    throw new Error(result.stderr.trim() || `Failed to ${operation}.`);
+  }
+}
+
+function isMissingContainerError(error: unknown): boolean {
+  const message =
+    typeof error === "string"
+      ? error
+      : error && typeof error === "object"
+        ? [
+            error instanceof Error ? error.message : "",
+            "stderr" in error ? String(error.stderr) : "",
+          ].join(" ")
+        : "";
+  return /no such container|no such object/i.test(message);
+}
+
+function wait(milliseconds: number): Promise<void> {
+  return new Promise((resolve) => window.setTimeout(resolve, milliseconds));
 }

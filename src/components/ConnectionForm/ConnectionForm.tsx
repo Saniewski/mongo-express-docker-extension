@@ -1,263 +1,166 @@
-import mongoExpressLogo from "../../assets/mongo-express-logo.png";
-import { ExtensionConfig } from "../../types/ExtensionConfig";
-import React, { useEffect, useState } from "react";
+import { FormEvent, useState } from "react";
 import {
-  Avatar,
-  Box,
-  Checkbox,
-  CircularProgress,
-  Container,
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
   FormControlLabel,
-  Link,
   Radio,
   RadioGroup,
   Stack,
   TextField,
-  Typography,
 } from "@mui/material";
-import OpenInNewIcon from "@mui/icons-material/OpenInNew";
-import { AUTH_BASIC, AUTH_CONNECTION_STRING } from "../../utils/constants";
-import { ddClient, ddToast } from "../../api/utils";
-import { LoadConfig, ResetConfig, SaveConfig } from "../../utils/config";
-import { LoadingButton } from "@mui/lab";
-import { useNavigate } from "react-router";
+import { MongoConnection } from "../../types/MongoConnection";
 
-export const ConnectionForm = () => {
-  const [extensionConfig, setExtensionConfig] = useState<ExtensionConfig>({
-    authMethod: AUTH_BASIC,
-  });
-  const [isButtonLoading, setButtonLoading] = useState(false);
-  const [isLoading, setLoading] = useState(true);
-  const navigate = useNavigate();
+type ConnectionFormProps = {
+  open: boolean;
+  connection?: MongoConnection;
+  onClose: () => void;
+  onSave: (connection: MongoConnection) => void;
+};
 
-  const credentialsNotEmpty = !!(
-    (extensionConfig.authMethod === AUTH_BASIC &&
-      extensionConfig.hostname &&
-      extensionConfig.port) ||
-    (extensionConfig.authMethod === AUTH_CONNECTION_STRING && extensionConfig.connectionString)
+const emptyConnection: Omit<MongoConnection, "id"> = {
+  name: "",
+  authMethod: "basic",
+  hostname: "localhost",
+  port: 27017,
+  username: "",
+  password: "",
+  connectionString: "mongodb://localhost:27017",
+};
+
+export const ConnectionForm = ({ open, connection, onClose, onSave }: ConnectionFormProps) => {
+  const [form, setForm] = useState<Omit<MongoConnection, "id">>(() =>
+    connection
+      ? {
+          name: connection.name,
+          authMethod: connection.authMethod,
+          hostname: connection.hostname,
+          port: connection.port,
+          username: connection.username,
+          password: connection.password,
+          connectionString: connection.connectionString,
+        }
+      : { ...emptyConnection },
   );
 
-  const HandleConnect = async () => {
-    setButtonLoading(true);
-    const configToConnect =
-      extensionConfig.authMethod === AUTH_BASIC
-        ? { ...extensionConfig, connectionString: "" }
-        : {
-            ...extensionConfig,
-            hostname: "",
-            port: 0,
-            username: "",
-            password: "",
-          };
-    if (configToConnect.rememberCredentials) {
-      const savingResult = await SaveConfig(configToConnect);
-      if (!savingResult) {
-        setButtonLoading(false);
-        ddToast.error("Failed to save credentials");
-      }
-    }
-    navigate("/mongo-express", {
-      state: {
-        extensionConfig: configToConnect,
-      },
+  const canSave =
+    form.name.trim().length > 0 &&
+    (form.authMethod === "basic"
+      ? !!form.hostname?.trim() && Number(form.port) > 0 && Number(form.port) <= 65535
+      : isValidConnectionString(form.connectionString ?? ""));
+
+  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!canSave) return;
+    onSave({
+      ...form,
+      id: connection?.id ?? "",
+      name: form.name.trim(),
+      port: Number(form.port) || 27017,
+      hostname: form.hostname?.trim(),
+      connectionString: form.connectionString?.trim(),
     });
   };
 
-  const HandleResetCredentials = () => {
-    ResetConfig()
-      .then((config) => {
-        setExtensionConfig({ ...config, authMethod: extensionConfig.authMethod });
-        ddToast.success("Credentials reset.");
-      })
-      .catch((error) => {
-        ddToast.error(error.stderr);
-      });
-  };
-
-  useEffect(() => {
-    LoadConfig()
-      .then((config) => {
-        if (config) {
-          setExtensionConfig(config);
-        }
-      })
-      .catch((error) => {
-        console.error(error);
-        ddToast.error(error.stderr);
-      })
-      .finally(() => {
-        setLoading(false);
-      });
-  }, [isLoading]);
-
   return (
-    <Container component="main" maxWidth="xs">
-      <Box
-        sx={{
-          mt: 4,
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-        }}
-        onKeyDown={(event) => {
-          if (event.key === "Enter" && credentialsNotEmpty) {
-            HandleConnect().then((r) => r);
-          }
-        }}
-      >
-        {isLoading ? (
-          <CircularProgress />
-        ) : (
-          <>
-            <Avatar
-              sx={{ m: 1, width: 60, height: 60 }}
-              alt="Mongo Express Logo"
-              src={mongoExpressLogo}
+    <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
+      <form onSubmit={handleSubmit}>
+        <DialogTitle>{connection ? "Edit connection" : "Add MongoDB connection"}</DialogTitle>
+        <DialogContent>
+          <Stack spacing={2} sx={{ pt: 1 }}>
+            <TextField
+              autoFocus
+              required
+              label="Connection name"
+              value={form.name}
+              onChange={(event) => setForm({ ...form, name: event.target.value })}
             />
-            <Typography variant="h5">Connect to MongoDB</Typography>
-            <Link
-              href="#"
-              onClick={() =>
-                ddClient?.host?.openExternal(
-                  "https://www.mongodb.com/docs/manual/reference/connection-string/",
-                )
+            <RadioGroup
+              row
+              value={form.authMethod}
+              onChange={(event) =>
+                setForm({
+                  ...form,
+                  authMethod: event.target.value as MongoConnection["authMethod"],
+                })
               }
-              variant="body2"
             >
-              {"Get help connecting to MongoDB"}
-              <OpenInNewIcon fontSize="inherit" />
-            </Link>
-            <Stack
-              direction="column"
-              spacing={2}
-              sx={{ mt: 2, justifyContent: "center", alignItems: "center" }}
-            >
-              <RadioGroup
-                row
-                value={extensionConfig.authMethod}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                  setExtensionConfig({ ...extensionConfig, authMethod: e.target.value })
-                }
-              >
-                <FormControlLabel
-                  disabled={isButtonLoading}
-                  value={AUTH_BASIC}
-                  control={<Radio />}
-                  label="Basic"
-                />
-                <FormControlLabel
-                  disabled={isButtonLoading}
-                  value={AUTH_CONNECTION_STRING}
-                  control={<Radio />}
-                  label="Connection String"
-                />
-              </RadioGroup>
-              {extensionConfig.authMethod === AUTH_BASIC ? (
-                <>
-                  <Stack
-                    direction="row"
-                    spacing={0}
-                    sx={{ justifyContent: "center", alignItems: "center" }}
-                  >
-                    <TextField
-                      disabled={isButtonLoading}
-                      margin="normal"
-                      fullWidth
-                      label="Hostname"
-                      value={extensionConfig.hostname}
-                      required
-                      autoFocus
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                        setExtensionConfig({ ...extensionConfig, hostname: e.target.value })
-                      }
-                    />
-                    <TextField
-                      disabled={isButtonLoading}
-                      margin="normal"
-                      label="Port"
-                      type="number"
-                      value={extensionConfig.port}
-                      required
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                        setExtensionConfig({ ...extensionConfig, port: Number(e.target.value) })
-                      }
-                    />
-                  </Stack>
+              <FormControlLabel value="basic" control={<Radio />} label="Host and credentials" />
+              <FormControlLabel
+                value="connectionString"
+                control={<Radio />}
+                label="Connection string"
+              />
+            </RadioGroup>
+            {form.authMethod === "basic" ? (
+              <>
+                <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
                   <TextField
-                    disabled={isButtonLoading}
-                    margin="normal"
+                    required
                     fullWidth
-                    key="username"
-                    label="Username"
-                    value={extensionConfig.username}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                      setExtensionConfig({ ...extensionConfig, username: e.target.value })
-                    }
+                    label="Hostname"
+                    value={form.hostname ?? ""}
+                    onChange={(event) => setForm({ ...form, hostname: event.target.value })}
                   />
                   <TextField
-                    disabled={isButtonLoading}
-                    margin="normal"
-                    fullWidth
-                    key="password"
-                    label="Password"
-                    type="password"
-                    value={extensionConfig.password}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                      setExtensionConfig({ ...extensionConfig, password: e.target.value })
-                    }
+                    required
+                    label="Port"
+                    type="number"
+                    slotProps={{ htmlInput: { min: 1, max: 65535 } }}
+                    value={form.port ?? 27017}
+                    onChange={(event) => setForm({ ...form, port: Number(event.target.value) })}
+                    sx={{ width: { xs: "100%", sm: 140 } }}
                   />
-                </>
-              ) : (
+                </Stack>
                 <TextField
-                  disabled={isButtonLoading}
-                  margin="normal"
-                  fullWidth
-                  key="connectionString"
-                  label="Connection String"
-                  value={extensionConfig.connectionString}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                    setExtensionConfig({ ...extensionConfig, connectionString: e.target.value })
-                  }
+                  label="Username (optional)"
+                  autoComplete="username"
+                  value={form.username ?? ""}
+                  onChange={(event) => setForm({ ...form, username: event.target.value })}
                 />
-              )}
-              <Stack
-                direction="row"
-                spacing={0}
-                sx={{ mt: 2, justifyContent: "center", alignItems: "center" }}
-              >
-                <FormControlLabel
-                  disabled={isButtonLoading}
-                  label="Remember this connection"
-                  control={
-                    <Checkbox
-                      checked={extensionConfig.rememberCredentials}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                        setExtensionConfig({
-                          ...extensionConfig,
-                          rememberCredentials: e.target.checked,
-                        })
-                      }
-                    />
-                  }
+                <TextField
+                  label="Password (optional)"
+                  type="password"
+                  autoComplete="current-password"
+                  value={form.password ?? ""}
+                  onChange={(event) => setForm({ ...form, password: event.target.value })}
                 />
-                <Link href="#" onClick={HandleResetCredentials} variant="body2">
-                  {"Reset saved credentials"}
-                </Link>
-              </Stack>
-              <LoadingButton
-                fullWidth
-                disabled={!credentialsNotEmpty}
-                loading={isButtonLoading}
-                type="submit"
-                variant="contained"
-                onClick={HandleConnect}
-              >
-                Connect
-              </LoadingButton>
-            </Stack>
-          </>
-        )}
-      </Box>
-    </Container>
+              </>
+            ) : (
+              <TextField
+                required
+                label="MongoDB connection string"
+                placeholder="mongodb://user:password@host:27017/database"
+                error={
+                  !!form.connectionString?.trim() && !isValidConnectionString(form.connectionString)
+                }
+                helperText="Use a valid mongodb:// or mongodb+srv:// connection string."
+                value={form.connectionString ?? ""}
+                onChange={(event) => setForm({ ...form, connectionString: event.target.value })}
+              />
+            )}
+          </Stack>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button onClick={onClose}>Cancel</Button>
+          <Button type="submit" variant="contained" disabled={!canSave}>
+            {connection ? "Save changes" : "Add connection"}
+          </Button>
+        </DialogActions>
+      </form>
+    </Dialog>
   );
 };
+
+function isValidConnectionString(value: string): boolean {
+  try {
+    const parsed = new URL(value.trim());
+    return (
+      (parsed.protocol === "mongodb:" || parsed.protocol === "mongodb+srv:") && !!parsed.hostname
+    );
+  } catch {
+    return false;
+  }
+}
