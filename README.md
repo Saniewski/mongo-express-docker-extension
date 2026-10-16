@@ -1,47 +1,44 @@
 # Mongo Express Docker Extension
+
 Run Mongo Express in Docker Desktop and connect to any MongoDB server.
 
 Mongo Express Docker Extension allows you to connect to any (local or remote) MongoDB server
 without having to install Mongo Express locally or manually create a Mongo Express Docker container.
 
 ## Features
-- Run Mongo Express in Docker Desktop.
-- Specify the MongoDB server to connect to.
-- Save credentials for future use.
+
+- Save and manage multiple MongoDB connections from the extension home page.
+- Connect using a hostname and optional credentials or a MongoDB connection string.
+- Start a Mongo Express container by opening a connection.
+- Remove the container by closing the connection and returning to the connections page. Containers left behind by an interrupted session are cleaned up the next time the home page opens.
+- Scope cleanup to containers labeled as belonging to this extension.
 
 ## Installation
-You can install the extension directly from the Docker Desktop marketplace using this link:
+
+Install the extension from the Docker Desktop marketplace:
 
 https://open.docker.com/extensions/marketplace?extensionId=saniewski/mongo-express-docker-extension&tag=1.0.2
 
-Alternatively, you can install it manually by running the following command in your terminal:
+Or install it manually:
+
 ```bash
 docker extension install saniewski/mongo-express-docker-extension:1.0.2
 ```
 
 ## Usage
-To connect to a MongoDB server, you can use the `Basic` authentication method by providing a hostname and a port of the
-MongoDB instance. Specifying a username and password is optional, depending on the security of your MongoDB server.
-Alternatively, you can use the `Connection String` authentication method by providing a valid MongoDB connection string.
-For instructions on how to use MongoDB connection strings, please, refer to [the official MongoDB documentation][7].
 
-## Screenshots
-![Login Page - Basic 1][1]
+Use **Add connection** on the home page to save a connection. The **Host and credentials** option accepts a MongoDB hostname, port, and optional username/password. The **Connection string** option accepts a MongoDB URI. Select **Open** to start Mongo Express for that connection; returning to the connections page stops and removes its container.
 
-![Login Page - Basic 2][2]
+For a MongoDB server running on the Docker Desktop host, use `host.docker.internal` or `localhost` as the host. `localhost` is translated to `host.docker.internal` for the Mongo Express container. For another MongoDB container, use its container name and ensure it shares a Docker network with the extension-managed Mongo Express container; the extension automatically joins a matching local MongoDB container's network when possible.
 
-![Login Page - Connection String][3]
+Saved connection details, including credentials, are stored in the Docker Desktop extension's browser `localStorage`. They are not sent anywhere by the extension. Remove saved connections you no longer need, and avoid saving secrets on a shared desktop account.
 
-![Loading Mongo Express][4]
+## Development
 
-![Mongo Express Dashboard][5]
+```bash
+pnpm install
+pnpm dev
+pnpm build
+```
 
-![Service Unavailable][6]
-
-[1]: https://raw.githubusercontent.com/Saniewski/mongo-express-docker-extension/main/docs/screenshots/01-login-page-basic-1.png
-[2]: https://raw.githubusercontent.com/Saniewski/mongo-express-docker-extension/main/docs/screenshots/02-login-page-basic-2.png
-[3]: https://raw.githubusercontent.com/Saniewski/mongo-express-docker-extension/main/docs/screenshots/03-login-page-connection-string.png
-[4]: https://raw.githubusercontent.com/Saniewski/mongo-express-docker-extension/main/docs/screenshots/04-loading-mongo-express.png
-[5]: https://raw.githubusercontent.com/Saniewski/mongo-express-docker-extension/main/docs/screenshots/05-mongo-express-dashboard.png
-[6]: https://raw.githubusercontent.com/Saniewski/mongo-express-docker-extension/main/docs/screenshots/06-service-unavailable.png
-[7]: https://www.mongodb.com/docs/manual/reference/connection-string/
+Build and install the Docker Desktop extension with `make install-extension`.
