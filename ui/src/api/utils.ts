@@ -1,19 +1,20 @@
 import { createDockerDesktopClient } from "@docker/extension-api-client";
 
 export const ddClient = createDockerDesktopClient();
-export const ddToast: any = ddClient.desktopUI.toast ??
+export const ddToast: any =
+  ddClient.desktopUI.toast ??
   new Proxy(
     {},
     {
       get({}, prop) {
         switch (prop) {
-          case 'error':
+          case "error":
             return console.error;
-          case 'warning':
+          case "warning":
             return console.warn;
           default:
             return console.log;
         }
       },
-    }
+    },
   );

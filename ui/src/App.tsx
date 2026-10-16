@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 import { BrowserRouter, Route, Routes } from "react-router";
 import { DockerMuiThemeProvider } from "@docker/docker-mui-theme";
 import { LoginPage } from "./pages/Login";

@@ -71,4 +71,4 @@ export type ExtensionConfig = {
    * "basic" | "connectionString"
    */
   authMethod?: string;
-}
+};

@@ -1,6 +1,9 @@
 import { ddClient } from "./utils";
 import { ExtensionConfig } from "../types/ExtensionConfig";
-import { MONGO_EXPRESS_CONTAINER_NAME, MONGO_EXPRESS_CONNECTION_SUCCESSFUL_MESSAGE } from "../utils/constants";
+import {
+  MONGO_EXPRESS_CONTAINER_NAME,
+  MONGO_EXPRESS_CONNECTION_SUCCESSFUL_MESSAGE,
+} from "../utils/constants";
 
 /**
  * Removes the existing mongo-express container and starts a new one with a provided configuration.
@@ -15,13 +18,13 @@ export async function startMongoExpress(config: ExtensionConfig): Promise<void> 
   mongo-express:latest
    */
   await removeMongoExpress();
-  let cliArgs = [];
-  let hostname = config.hostname ?? '';
+  const cliArgs = [];
+  let hostname = config.hostname ?? "";
   if (config.connectionString) {
-    cliArgs.push('-e', `"ME_CONFIG_MONGODB_URL=${config.connectionString}"`);
+    cliArgs.push("-e", `"ME_CONFIG_MONGODB_URL=${config.connectionString}"`);
     const pattern =
-      '^mongodb(\\+srv)??:\\/\\/(?<credentials>(?<username>\\w+):?(?<password>\\w+)\@)?' +
-      '(?<hostname>[\\w.]+)(:(?<port>\\d+))?';
+      "^mongodb(\\+srv)??:\\/\\/(?<credentials>(?<username>\\w+):?(?<password>\\w+)\@)?" +
+      "(?<hostname>[\\w.]+)(:(?<port>\\d+))?";
     const match = config.connectionString.match(pattern);
     if (match) {
       const matchedHostname = match.groups?.hostname;
@@ -30,24 +33,31 @@ export async function startMongoExpress(config: ExtensionConfig): Promise<void> 
       }
     }
   } else if (config.username && config.password) {
-    cliArgs.push('-e',
-      `ME_CONFIG_MONGODB_URL=mongodb://${config.username}:${config.password}@${config.hostname}:${config.port}`);
+    cliArgs.push(
+      "-e",
+      `ME_CONFIG_MONGODB_URL=mongodb://${config.username}:${config.password}@${config.hostname}:${config.port}`,
+    );
   } else {
-    cliArgs.push('-e', `ME_CONFIG_MONGODB_URL=mongodb://${config.hostname}:${config.port}`);
+    cliArgs.push("-e", `ME_CONFIG_MONGODB_URL=mongodb://${config.hostname}:${config.port}`);
   }
   const localMongoContainerNameAndNetwork = await getLocalMongoContainerNameAndNetwork();
-  if (localMongoContainerNameAndNetwork && localMongoContainerNameAndNetwork[0].includes(hostname)) {
-    cliArgs.push('--network', localMongoContainerNameAndNetwork[1])
+  if (
+    localMongoContainerNameAndNetwork &&
+    localMongoContainerNameAndNetwork[0].includes(hostname)
+  ) {
+    cliArgs.push("--network", localMongoContainerNameAndNetwork[1]);
   }
   cliArgs.push(
     // '-e', 'ME_CONFIG_MONGODB_ENABLE_ADMIN=true',
     // '--rm',
-    '-d',
-    '-p', '8081:8081',
-    '--name', MONGO_EXPRESS_CONTAINER_NAME,
-    'mongo-express:latest'
+    "-d",
+    "-p",
+    "8081:8081",
+    "--name",
+    MONGO_EXPRESS_CONTAINER_NAME,
+    "mongo-express:latest",
   );
-  await ddClient.docker?.cli?.exec('run', cliArgs);
+  await ddClient.docker?.cli?.exec("run", cliArgs);
 }
 
 /**
@@ -55,22 +65,27 @@ export async function startMongoExpress(config: ExtensionConfig): Promise<void> 
  */
 export async function getLocalMongoContainerNameAndNetwork(): Promise<[string, string] | null> {
   // docker ps -a --filter status=running --format "{{.ID}} {{.Names}} {{.Image}} {{.Networks}}"
-  const psResult = await ddClient.docker?.cli?.exec('ps', [
-    '-a',
-    '--filter', 'status=running',
-    '--format', '"{{.ID}} {{.Names}} {{.Image}} {{.Networks}}"'
+  const psResult = await ddClient.docker?.cli?.exec("ps", [
+    "-a",
+    "--filter",
+    "status=running",
+    "--format",
+    '"{{.ID}} {{.Names}} {{.Image}} {{.Networks}}"',
   ]);
   const lines = psResult.lines();
   for (const line of lines) {
-    const results = line.split(' ');
+    const results = line.split(" ");
     if (results.length === 4) {
       const name = results[1];
       const image = results[2].toLowerCase();
       const network = results[3];
       if (
-        image === 'mongo' || image.startsWith('mongo:') ||
-        image === 'bitnami/mongodb' || image.startsWith('bitnami/mongodb:') ||
-        image === 'circleci/mongo' || image.startsWith('circleci/mongo:')
+        image === "mongo" ||
+        image.startsWith("mongo:") ||
+        image === "bitnami/mongodb" ||
+        image.startsWith("bitnami/mongodb:") ||
+        image === "circleci/mongo" ||
+        image.startsWith("circleci/mongo:")
       ) {
         return [name, network];
       }
@@ -85,14 +100,14 @@ export async function getLocalMongoContainerNameAndNetwork(): Promise<[string, s
 export async function checkIfMongoExpressIsUp(): Promise<string | null> {
   const status = await getMongoExpressStatus();
   if (!status) return null;
-  if (status.toLowerCase().includes('exited')) {
-    return 'exited';
+  if (status.toLowerCase().includes("exited")) {
+    return "exited";
   }
-  if (status.toLowerCase().includes('up')) {
+  if (status.toLowerCase().includes("up")) {
     const logs = await getMongoExpressLogs();
     console.dir(logs);
     if (logs.includes(MONGO_EXPRESS_CONNECTION_SUCCESSFUL_MESSAGE)) {
-      return 'up';
+      return "up";
     }
   }
   return null;
@@ -103,10 +118,12 @@ export async function checkIfMongoExpressIsUp(): Promise<string | null> {
  */
 export async function getMongoExpressStatus(): Promise<string | null> {
   // docker ps -a --filter name=dd-ext-mongo-express --format "{{.Status}}"
-  const psResult = await ddClient.docker?.cli?.exec('ps', [
-    '-a',
-    '--filter', `name=${MONGO_EXPRESS_CONTAINER_NAME}`,
-    '--format', '{{.Status}}'
+  const psResult = await ddClient.docker?.cli?.exec("ps", [
+    "-a",
+    "--filter",
+    `name=${MONGO_EXPRESS_CONTAINER_NAME}`,
+    "--format",
+    "{{.Status}}",
   ]);
   const lines = psResult.lines();
   if (lines.length > 0) {
@@ -120,13 +137,13 @@ export async function getMongoExpressStatus(): Promise<string | null> {
  */
 export async function getMongoExpressLogs(): Promise<string> {
   // docker logs -t --details dd-ext-mongo-express
-  const logsResult = await ddClient.docker?.cli?.exec('logs', [
-    '-t',
-    '--details',
-    MONGO_EXPRESS_CONTAINER_NAME
+  const logsResult = await ddClient.docker?.cli?.exec("logs", [
+    "-t",
+    "--details",
+    MONGO_EXPRESS_CONTAINER_NAME,
   ]);
   const lines = logsResult.lines();
-  return lines.join('\n');
+  return lines.join("\n");
 }
 
 /**
@@ -134,5 +151,5 @@ export async function getMongoExpressLogs(): Promise<string> {
  */
 export async function removeMongoExpress(): Promise<void> {
   // docker rm -f dd-ext-mongo-express
-  await ddClient.docker?.cli?.exec('rm', ['-f', MONGO_EXPRESS_CONTAINER_NAME]);
+  await ddClient.docker?.cli?.exec("rm", ["-f", MONGO_EXPRESS_CONTAINER_NAME]);
 }

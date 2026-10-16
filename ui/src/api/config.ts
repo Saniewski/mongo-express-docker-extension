@@ -32,8 +32,8 @@ export async function saveExtensionConfig(config: ExtensionConfig): Promise<Exte
 async function getConfig(): Promise<ApiResponse | Error> {
   try {
     const service = ddClient.extension.vm?.service;
-    if (!service) throw new Error('Extension service is unavailable');
-    return await service.get('/config') as ApiResponse;
+    if (!service) throw new Error("Extension service is unavailable");
+    return (await service.get("/config")) as ApiResponse;
   } catch (error) {
     return error instanceof Error ? error : new Error(String(error));
   }
@@ -42,8 +42,8 @@ async function getConfig(): Promise<ApiResponse | Error> {
 async function saveConfig(config: ExtensionConfig): Promise<ApiResponse | Error> {
   try {
     const service = ddClient.extension.vm?.service;
-    if (!service) throw new Error('Extension service is unavailable');
-    return await service.post('/config', config) as ApiResponse;
+    if (!service) throw new Error("Extension service is unavailable");
+    return (await service.post("/config", config)) as ApiResponse;
   } catch (error) {
     return error instanceof Error ? error : new Error(String(error));
   }
