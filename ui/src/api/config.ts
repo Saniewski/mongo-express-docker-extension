@@ -2,9 +2,9 @@ import { ddClient } from "./utils";
 import { ExtensionConfig } from "../types/ExtensionConfig";
 
 export class ApiResponse {
-  error: boolean;
-  message: string;
-  data: ExtensionConfig;
+  error!: boolean;
+  message!: string;
+  data!: ExtensionConfig;
 }
 
 export async function getExtensionConfig(): Promise<ExtensionConfig> {
@@ -30,21 +30,21 @@ export async function saveExtensionConfig(config: ExtensionConfig): Promise<Exte
 }
 
 async function getConfig(): Promise<ApiResponse | Error> {
-  return ddClient.extension.vm?.service?.get('/config')
-    .then((response: ApiResponse) => {
-      return response;
-    })
-    .catch((error: Error) => {
-      return error;
-    });
+  try {
+    const service = ddClient.extension.vm?.service;
+    if (!service) throw new Error('Extension service is unavailable');
+    return await service.get('/config') as ApiResponse;
+  } catch (error) {
+    return error instanceof Error ? error : new Error(String(error));
+  }
 }
 
 async function saveConfig(config: ExtensionConfig): Promise<ApiResponse | Error> {
-  return ddClient.extension.vm?.service?.post('/config', config)
-    .then((response: ApiResponse) => {
-      return response;
-    })
-    .catch((error: Error) => {
-      return error;
-    });
+  try {
+    const service = ddClient.extension.vm?.service;
+    if (!service) throw new Error('Extension service is unavailable');
+    return await service.post('/config', config) as ApiResponse;
+  } catch (error) {
+    return error instanceof Error ? error : new Error(String(error));
+  }
 }

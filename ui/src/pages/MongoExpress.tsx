@@ -1,6 +1,6 @@
 import { Box, Grid, LinearProgress, Typography } from "@mui/material";
 import React, { useEffect, useState } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation } from "react-router";
 import { ddToast } from "../api/utils";
 import { checkIfMongoExpressIsUp, removeMongoExpress, startMongoExpress } from "../api/docker";
 import { ServiceUnavailable } from "../components/ServiceUnavailable/ServiceUnavailable";
