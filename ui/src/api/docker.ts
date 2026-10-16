@@ -16,7 +16,7 @@ export async function startMongoExpress(config: ExtensionConfig): Promise<void> 
    */
   await removeMongoExpress();
   let cliArgs = [];
-  let hostname = config.hostname;
+  let hostname = config.hostname ?? '';
   if (config.connectionString) {
     cliArgs.push('-e', `"ME_CONFIG_MONGODB_URL=${config.connectionString}"`);
     const pattern =
@@ -24,9 +24,9 @@ export async function startMongoExpress(config: ExtensionConfig): Promise<void> 
       '(?<hostname>[\\w.]+)(:(?<port>\\d+))?';
     const match = config.connectionString.match(pattern);
     if (match) {
-      const { groups } = match;
-      if (groups.hostname) {
-        hostname = groups.hostname;
+      const matchedHostname = match.groups?.hostname;
+      if (matchedHostname) {
+        hostname = matchedHostname;
       }
     }
   } else if (config.username && config.password) {
@@ -53,7 +53,7 @@ export async function startMongoExpress(config: ExtensionConfig): Promise<void> 
 /**
  * Returns container name and network name of a local docker container running mongo if it's present, otherwise null.
  */
-export async function getLocalMongoContainerNameAndNetwork(): Promise<[string, string]> {
+export async function getLocalMongoContainerNameAndNetwork(): Promise<[string, string] | null> {
   // docker ps -a --filter status=running --format "{{.ID}} {{.Names}} {{.Image}} {{.Networks}}"
   const psResult = await ddClient.docker?.cli?.exec('ps', [
     '-a',
@@ -82,8 +82,9 @@ export async function getLocalMongoContainerNameAndNetwork(): Promise<[string, s
 /**
  * Checks if the mongo-express container is running.
  */
-export async function checkIfMongoExpressIsUp(): Promise<string> {
+export async function checkIfMongoExpressIsUp(): Promise<string | null> {
   const status = await getMongoExpressStatus();
+  if (!status) return null;
   if (status.toLowerCase().includes('exited')) {
     return 'exited';
   }
@@ -100,7 +101,7 @@ export async function checkIfMongoExpressIsUp(): Promise<string> {
 /**
  * Checks if the mongo-express container is running.
  */
-export async function getMongoExpressStatus(): Promise<string> {
+export async function getMongoExpressStatus(): Promise<string | null> {
   // docker ps -a --filter name=dd-ext-mongo-express --format "{{.Status}}"
   const psResult = await ddClient.docker?.cli?.exec('ps', [
     '-a',

@@ -3,7 +3,7 @@ import React from "react";
 import mongoExpressLogo from "../../assets/mongo-express-logo.png";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 import { ddClient } from "../../api/utils";
 
 export const ServiceUnavailable = () => {
