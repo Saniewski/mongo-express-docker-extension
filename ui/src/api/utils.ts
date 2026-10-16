@@ -1,12 +1,12 @@
 import { createDockerDesktopClient } from "@docker/extension-api-client";
 
 export const ddClient = createDockerDesktopClient();
-export const ddToast: any =
+export const ddToast =
   ddClient.desktopUI.toast ??
-  new Proxy(
+  (new Proxy(
     {},
     {
-      get({}, prop) {
+      get(_target, prop: string) {
         switch (prop) {
           case "error":
             return console.error;
@@ -17,4 +17,4 @@ export const ddToast: any =
         }
       },
     },
-  );
+  ) as NonNullable<typeof ddClient.desktopUI.toast>);

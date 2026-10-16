@@ -10,8 +10,8 @@ export const SaveConfig = async (extensionConfig: ExtensionConfig): Promise<bool
   try {
     await saveExtensionConfig(extensionConfig);
     return true;
-  } catch (error: any) {
-    ddToast.error(error.stderr);
+  } catch (error: unknown) {
+    ddToast.error(error instanceof Error ? error.message : String(error));
     return false;
   }
 };
