@@ -113,7 +113,7 @@ export const ConnectionForm = () => {
               {"Get help connecting to MongoDB"}
               <OpenInNewIcon fontSize="inherit" />
             </Link>
-            <Stack direction="column" justifyContent="center" alignItems="center" spacing={2} mt={2}>
+            <Stack direction="column" spacing={2} sx={{ mt: 2, justifyContent: 'center', alignItems: 'center' }}>
               <RadioGroup
                 row
                 value={extensionConfig.authMethod}
@@ -134,7 +134,7 @@ export const ConnectionForm = () => {
               </RadioGroup>
               {extensionConfig.authMethod === AUTH_BASIC ? (
                 <>
-                  <Stack direction="row" justifyContent="center" alignItems="center" spacing={0}>
+                  <Stack direction="row" spacing={0} sx={{ justifyContent: 'center', alignItems: 'center' }}>
                     <TextField
                       disabled={isButtonLoading}
                       margin="normal"
@@ -187,7 +187,7 @@ export const ConnectionForm = () => {
                     setExtensionConfig({ ...extensionConfig, connectionString: e.target.value })}
                 />
               )}
-              <Stack direction="row" justifyContent="center" alignItems="center" spacing={0} mt={2}>
+              <Stack direction="row" spacing={0} sx={{ mt: 2, justifyContent: 'center', alignItems: 'center' }}>
                 <FormControlLabel
                   disabled={isButtonLoading}
                   label="Remember this connection"

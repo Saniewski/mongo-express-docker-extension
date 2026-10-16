@@ -1,4 +1,4 @@
-import { Box, Grid, LinearProgress, Typography } from "@mui/material";
+import { Box, LinearProgress, Typography } from "@mui/material";
 import React, { useEffect, useState } from "react";
 import { useLocation } from "react-router";
 import { ddToast } from "../api/utils";
@@ -68,22 +68,22 @@ export const MongoExpressPage = () => {
   return (
     <>
       {isLoading ? (
-        <Grid
-          container
-          flex={1}
-          direction="column"
-          height="100%"
-          justifyContent="center"
-          alignItems="center"
-          spacing={4}
+        <Box
+          sx={{
+            display: 'flex',
+            flex: 1,
+            flexDirection: 'column',
+            height: '100%',
+            justifyContent: 'center',
+            alignItems: 'center',
+            gap: 4,
+          }}
         >
-          <Grid item width="90%">
+          <Box sx={{ width: '90%' }}>
             <LinearProgress />
-          </Grid>
-          <Grid item>
-            <Typography>Mongo Express is starting...</Typography>
-          </Grid>
-        </Grid>
+          </Box>
+          <Typography>Mongo Express is starting...</Typography>
+        </Box>
       ) : (
         <>
           {!isReady ? (
