@@ -18,18 +18,18 @@ export const SaveConfig = async (extensionConfig: ExtensionConfig): Promise<bool
 
 export const LoadConfig = async (): Promise<ExtensionConfig> => {
   return await getExtensionConfig();
-}
+};
 
 export const ResetConfig = async (): Promise<ExtensionConfig> => {
   const config: ExtensionConfig = {
-    hostname: 'localhost',
+    hostname: "localhost",
     port: 27017,
-    username: '',
-    password: '',
-    connectionString: 'mongodb://localhost:27017',
+    username: "",
+    password: "",
+    connectionString: "mongodb://localhost:27017",
     rememberCredentials: false,
     authMethod: AUTH_BASIC,
-  }
+  };
   await SaveConfig(config);
   return config;
-}
+};

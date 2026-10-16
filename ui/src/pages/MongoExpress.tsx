@@ -15,27 +15,27 @@ export const MongoExpressPage = () => {
 
   useEffect(() => {
     if (isLoading) {
-      document.body.classList.add('full-screen-body');
-      document.getElementById('root')?.classList.add('full-screen-root');
+      document.body.classList.add("full-screen-body");
+      document.getElementById("root")?.classList.add("full-screen-root");
       startMongoExpress(extensionConfig)
         .then(() => {
           let retries = 30;
-          let timer = setInterval(() => {
+          const timer = setInterval(() => {
             if (retries === 0) {
               clearInterval(timer);
-              ddToast.error('Mongo Express failed to start after 30 seconds.');
+              ddToast.error("Mongo Express failed to start after 30 seconds.");
               setLoading(false);
             }
             checkIfMongoExpressIsUp()
               .then((status) => {
-                console.log('Mongo Express status: ', status);
-                if (status === 'up') {
+                console.log("Mongo Express status: ", status);
+                if (status === "up") {
                   setReady(true);
                   setLoading(false);
-                  document.body.classList.add('full-screen-body');
-                  document.getElementById('root')?.classList.add('full-screen-root');
+                  document.body.classList.add("full-screen-body");
+                  document.getElementById("root")?.classList.add("full-screen-root");
                   clearInterval(timer);
-                } else if (status === 'exited') {
+                } else if (status === "exited") {
                   setLoading(false);
                   clearInterval(timer);
                 }
@@ -56,8 +56,8 @@ export const MongoExpressPage = () => {
     return () => {
       removeMongoExpress()
         .then(() => {
-          document.body.classList.remove('full-screen-body');
-          document.getElementById('root')?.classList.remove('full-screen-root');
+          document.body.classList.remove("full-screen-body");
+          document.getElementById("root")?.classList.remove("full-screen-root");
         })
         .catch((error) => {
           ddToast.error(error.stderr);
@@ -70,16 +70,16 @@ export const MongoExpressPage = () => {
       {isLoading ? (
         <Box
           sx={{
-            display: 'flex',
+            display: "flex",
             flex: 1,
-            flexDirection: 'column',
-            height: '100%',
-            justifyContent: 'center',
-            alignItems: 'center',
+            flexDirection: "column",
+            height: "100%",
+            justifyContent: "center",
+            alignItems: "center",
             gap: 4,
           }}
         >
-          <Box sx={{ width: '90%' }}>
+          <Box sx={{ width: "90%" }}>
             <LinearProgress />
           </Box>
           <Typography>Mongo Express is starting...</Typography>
@@ -91,20 +91,20 @@ export const MongoExpressPage = () => {
           ) : (
             <Box
               sx={{
-                display: 'flex',
+                display: "flex",
                 flex: 1,
-                width: '100%',
-                height: '100%',
+                width: "100%",
+                height: "100%",
               }}
             >
               <iframe
                 style={{
-                  border: 'none',
-                  width: '100%',
-                  height: '100%',
+                  border: "none",
+                  width: "100%",
+                  height: "100%",
                 }}
                 title="Mongo Express Docker Extension"
-                src='http://localhost:8081/'
+                src="http://localhost:8081/"
               />
             </Box>
           )}

@@ -1,4 +1,4 @@
-import { Avatar, Box, Button, Container, Stack, Typography } from '@mui/material';
+import { Avatar, Box, Button, Container, Stack, Typography } from "@mui/material";
 import React from "react";
 import mongoExpressLogo from "../../assets/mongo-express-logo.png";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
@@ -14,29 +14,34 @@ export const ServiceUnavailable = () => {
       <Box
         sx={{
           mt: 8,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center'
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
         }}
       >
-        <Avatar sx={{ m: 1, width: 60, height: 60 }} alt="Mongo Express Logo" src={mongoExpressLogo} />
+        <Avatar
+          sx={{ m: 1, width: 60, height: 60 }}
+          alt="Mongo Express Logo"
+          src={mongoExpressLogo}
+        />
         <Typography variant="h5">Service Unavailable</Typography>
         <Typography variant="body1" color="text.secondary" sx={{ mt: 2 }} align="justify">
           Please, make sure the credentials are correct or try again after restarting / reinstalling
-          the extension.<br />If the problem persists, please create an issue on the extension's GitHub page.
+          the extension.
+          <br />
+          If the problem persists, please create an issue on the extension's GitHub page.
         </Typography>
         <Stack direction="row" spacing={2} sx={{ mt: 2 }}>
-          <Button
-            startIcon={<ArrowBackIcon />}
-            onClick={() => navigate('/')}
-            variant="contained"
-          >
+          <Button startIcon={<ArrowBackIcon />} onClick={() => navigate("/")} variant="contained">
             {"Return to the main page"}
           </Button>
           <Button
             endIcon={<OpenInNewIcon />}
             onClick={() =>
-              ddClient?.host?.openExternal('https://github.com/Saniewski/mongo-express-docker-extension/issues/new')}
+              ddClient?.host?.openExternal(
+                "https://github.com/Saniewski/mongo-express-docker-extension/issues/new",
+              )
+            }
             variant="outlined"
           >
             {"Report an issue"}
