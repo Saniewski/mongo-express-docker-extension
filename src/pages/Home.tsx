@@ -1,40 +1,19 @@
 import { useEffect, useState } from "react";
-import {
-  Alert,
-  CircularProgress,
-  Button,
-  Container,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  IconButton,
-  Paper,
-  Stack,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Typography,
-} from "@mui/material";
-import AddIcon from "@mui/icons-material/Add";
-import DeleteIcon from "@mui/icons-material/Delete";
-import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
-import OpenInNewIcon from "@mui/icons-material/OpenInNew";
+import { Alert, CircularProgress, Container } from "@mui/material";
 import { useNavigate } from "react-router";
 import { cleanupMongoExpressContainers, removeMongoExpress } from "../api/docker";
 import {
   loadConnections,
   saveConnections,
   createConnectionId,
-  getConnectionEndpoint,
 } from "../api/connections";
 import { ddToast } from "../api/utils";
 import { ConnectionForm } from "../components/ConnectionForm/ConnectionForm";
 import { ExtensionHeader } from "../components/ExtensionHeader/ExtensionHeader";
 import { ExtensionFooter } from "../components/ExtensionFooter/ExtensionFooter";
+import { ConnectionsTable } from "../components/ConnectionsTable/ConnectionsTable";
+import { ConnectionsTableToolbar } from "../components/ConnectionsTableToolbar/ConnectionsTableToolbar";
+import { DeletionConfirmationDialog } from "../components/DeletionConfirmationDialog/DeletionConfirmationDialog";
 import { MongoConnection } from "../types/MongoConnection";
 
 export const HomePage = () => {
@@ -110,21 +89,7 @@ export const HomePage = () => {
       }}
     >
       <ExtensionHeader />
-      <Stack
-        direction={{ xs: "column", sm: "row" }}
-        spacing={2}
-        sx={{ mb: 2, justifyContent: "space-between", alignItems: { xs: "stretch", sm: "center" } }}
-      >
-        <Typography variant="h5">MongoDB connections</Typography>
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={openNewConnection}
-          disabled={isPreparing}
-        >
-          Add connection
-        </Button>
-      </Stack>
+      <ConnectionsTableToolbar disabled={isPreparing} onAddConnection={openNewConnection} />
 
       {isPreparing ? (
         <Alert severity="info" icon={<CircularProgress size={18} />}>
@@ -135,65 +100,16 @@ export const HomePage = () => {
           No connections yet. Add a MongoDB connection to start using Mongo Express.
         </Alert>
       ) : (
-        <TableContainer
-          component={Paper}
-          sx={{ flex: 1, minHeight: 0, overflow: "auto" }}
-        >
-          <Table aria-label="Configured MongoDB connections">
-            <TableHead>
-              <TableRow>
-                <TableCell>Connection</TableCell>
-                <TableCell>MongoDB endpoint</TableCell>
-                <TableCell>Authentication</TableCell>
-                <TableCell align="right">Actions</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {connections.map((connection) => (
-                <TableRow key={connection.id} hover>
-                  <TableCell>
-                    <Typography sx={{ fontWeight: 600 }}>{connection.name}</Typography>
-                  </TableCell>
-                  <TableCell>{getConnectionEndpoint(connection)}</TableCell>
-                  <TableCell>
-                    {connection.authMethod === "basic"
-                      ? "Host and credentials"
-                      : "Connection string"}
-                  </TableCell>
-                  <TableCell align="right">
-                    <Stack direction="row" spacing={1} sx={{ justifyContent: "flex-end" }}>
-                      <Button
-                        size="small"
-                        variant="contained"
-                        endIcon={<OpenInNewIcon />}
-                        disabled={isPreparing}
-                        onClick={() => navigate(`/mongo-express/${connection.id}`)}
-                      >
-                        Open
-                      </Button>
-                      <IconButton
-                        aria-label={`Edit ${connection.name}`}
-                        onClick={() => {
-                          setEditingConnection(connection);
-                          setFormOpen(true);
-                        }}
-                      >
-                        <EditOutlinedIcon />
-                      </IconButton>
-                      <IconButton
-                        aria-label={`Delete ${connection.name}`}
-                        color="error"
-                        onClick={() => setDeletingConnection(connection)}
-                      >
-                        <DeleteIcon />
-                      </IconButton>
-                    </Stack>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
+        <ConnectionsTable
+          connections={connections}
+          isPreparing={isPreparing}
+          onOpen={(connection) => navigate(`/mongo-express/${connection.id}`)}
+          onEdit={(connection) => {
+            setEditingConnection(connection);
+            setFormOpen(true);
+          }}
+          onDelete={setDeletingConnection}
+        />
       )}
 
       <ExtensionFooter />
@@ -209,23 +125,12 @@ export const HomePage = () => {
         onSave={handleSave}
       />
 
-      <Dialog
-        open={!!deletingConnection}
-        onClose={() => !isDeleting && setDeletingConnection(undefined)}
-      >
-        <DialogTitle>Delete connection?</DialogTitle>
-        <DialogContent>
-          {`“${deletingConnection?.name ?? ""}” will be removed from your saved connections.`}
-        </DialogContent>
-        <DialogActions>
-          <Button disabled={isDeleting} onClick={() => setDeletingConnection(undefined)}>
-            Cancel
-          </Button>
-          <Button color="error" disabled={isDeleting} onClick={handleDelete}>
-            Delete
-          </Button>
-        </DialogActions>
-      </Dialog>
+      <DeletionConfirmationDialog
+        connection={deletingConnection}
+        isDeleting={isDeleting}
+        onClose={() => setDeletingConnection(undefined)}
+        onConfirm={handleDelete}
+      />
     </Container>
   );
 };
