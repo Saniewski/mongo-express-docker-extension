@@ -1,8 +1,5 @@
 {
   "icon": "mongo-express-logo.svg",
-  "vm": {
-    "composefile": "docker-compose.yaml"
-  },
   "ui": {
     "dashboard-tab": {
       "title": "Mongo Express",

@@ -5,7 +5,7 @@ RUN corepack enable && pnpm install --frozen-lockfile
 COPY . /ui
 RUN pnpm run build
 
-FROM alpine:3.22
+FROM scratch
 
 ARG ADDITIONAL_URLS
 ARG CHANGELOG
@@ -25,8 +25,5 @@ LABEL \
     com.docker.extension.categories="database,utility-tools" \
     com.docker.extension.publisher-url="https://github.com/Saniewski/mongo-express-docker-extension"
 
-COPY docker-compose.yaml metadata.json mongo-express-logo.svg ./
+COPY metadata.json mongo-express-logo.svg ./
 COPY --from=builder /ui/build /ui
-
-# The extension image is kept alive for Docker Desktop to serve the bundled UI. It has no API service.
-CMD ["tail", "-f", "/dev/null"]
