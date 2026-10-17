@@ -1,3 +1,0 @@
-services:
-  mongo-express-docker-extension:
-    image: ${DESKTOP_PLUGIN_IMAGE}
