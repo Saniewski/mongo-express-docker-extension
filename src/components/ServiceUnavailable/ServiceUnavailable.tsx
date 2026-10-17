@@ -28,7 +28,7 @@ export const ServiceUnavailable = ({ message, onReturn, onRetry }: ServiceUnavai
         src={mongoExpressLogo}
       />
       <Typography variant="h5">Service Unavailable</Typography>
-      <Typography variant="body1" color="text.secondary" sx={{ mt: 2 }}>
+      <Typography variant="body1" color="textSecondary" sx={{ mt: 2 }}>
         {message}
       </Typography>
       <Stack direction={{ xs: "column", sm: "row" }} spacing={2} sx={{ mt: 3 }}>

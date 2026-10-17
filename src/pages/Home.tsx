@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import {
   Alert,
-  Box,
   CircularProgress,
   Button,
   Container,
@@ -35,6 +34,7 @@ import {
 import { ddToast } from "../api/utils";
 import { ConnectionForm } from "../components/ConnectionForm/ConnectionForm";
 import { ExtensionHeader } from "../components/ExtensionHeader/ExtensionHeader";
+import { ExtensionFooter } from "../components/ExtensionFooter/ExtensionFooter";
 import { MongoConnection } from "../types/MongoConnection";
 
 export const HomePage = () => {
@@ -97,7 +97,18 @@ export const HomePage = () => {
   };
 
   return (
-    <Container maxWidth="lg" sx={{ py: 4 }}>
+    <Container
+      maxWidth="xl"
+      sx={{
+        px: { xs: 0 },
+        // Docker Desktop overlays its status bar at the bottom of the extension viewport.
+        height: "calc(100vh - 32px)",
+        boxSizing: "border-box",
+        display: "flex",
+        flexDirection: "column",
+        overflow: "hidden",
+      }}
+    >
       <ExtensionHeader />
       <Stack
         direction={{ xs: "column", sm: "row" }}
@@ -124,7 +135,10 @@ export const HomePage = () => {
           No connections yet. Add a MongoDB connection to start using Mongo Express.
         </Alert>
       ) : (
-        <TableContainer component={Paper}>
+        <TableContainer
+          component={Paper}
+          sx={{ flex: 1, minHeight: 0, overflow: "auto" }}
+        >
           <Table aria-label="Configured MongoDB connections">
             <TableHead>
               <TableRow>
@@ -182,12 +196,7 @@ export const HomePage = () => {
         </TableContainer>
       )}
 
-      <Box sx={{ mt: 2 }}>
-        <Typography variant="body2" color="text.secondary">
-          Mongo Express containers run only while you are viewing a connection. Saved credentials
-          are kept in this Docker Desktop extension&apos;s browser storage.
-        </Typography>
-      </Box>
+      <ExtensionFooter />
 
       <ConnectionForm
         key={formOpen ? (editingConnection?.id ?? "new") : "closed"}
