@@ -195,7 +195,7 @@ async function findLocalMongoContainer(
       `--format={{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}`,
       name,
     ]);
-    const ipAddress = inspect.stdout.trim();
+    const ipAddress = (inspect.stdout ?? "").trim();
     return { network, ...(ipAddress ? { ipAddress } : {}) };
   }
   return null;
