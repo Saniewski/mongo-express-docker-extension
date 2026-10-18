@@ -183,7 +183,7 @@ async function findLocalMongoContainer(
   ]);
   assertSuccessful(result, "find local MongoDB containers");
 
-  for (const line of result.lines()) {
+  for (const line of (result.stdout ?? "").split(/\r?\n/)) {
     const [name, image = "", networks = ""] = line.split("|");
     if (name !== hostname || !isMongoImage(image)) continue;
 
