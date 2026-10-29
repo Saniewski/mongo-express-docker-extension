@@ -35,6 +35,7 @@ const emptyConnection: Omit<MongoConnection, "id"> = {
   port: 27017,
   username: "",
   password: "",
+  directConnection: false,
   connectionString: "mongodb://localhost:27017",
   databaseScoped: false,
   databaseName: "",
@@ -51,6 +52,7 @@ export const ConnectionForm = ({ open, connection, onClose, onSave }: Connection
           port: connection.port,
           username: connection.username,
           password: connection.password,
+          directConnection: connection.directConnection ?? false,
           connectionString: connection.connectionString,
           databaseScoped: connection.databaseScoped ?? false,
           databaseName: connection.databaseName ?? "",
@@ -179,6 +181,23 @@ export const ConnectionForm = ({ open, connection, onClose, onSave }: Connection
                   value={form.password ?? ""}
                   onChange={(event) => setForm({ ...form, password: event.target.value })}
                 />
+                <Stack spacing={1}>
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        checked={form.directConnection ?? false}
+                        onChange={(event) =>
+                          setForm({ ...form, directConnection: event.target.checked })
+                        }
+                      />
+                    }
+                    label="Direct connection"
+                  />
+                  <Typography variant="body2" color="text.secondary">
+                    Connect only to the specified host and port, without automatically
+                    discovering other servers.
+                  </Typography>
+                </Stack>
               </>
             ) : (
               <TextField

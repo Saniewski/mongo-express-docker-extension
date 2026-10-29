@@ -6,6 +6,7 @@ export type MongoConnection = {
   port?: number;
   username?: string;
   password?: string;
+  directConnection?: boolean;
   connectionString?: string;
   databaseScoped?: boolean;
   databaseName?: string;

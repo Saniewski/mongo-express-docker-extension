@@ -73,6 +73,10 @@ With **Host and credentials**, enter credentials normally; the extension handles
 See the [MongoDB connection string documentation](https://www.mongodb.com/docs/manual/reference/connection-string/)
 for options such as `authSource` and replica set settings.
 
+Enable **Direct connection** in **Host and credentials** to connect only to the specified host and
+port, without automatically discovering other servers. The option is off by default and is saved
+with the connection. In **Connection string** mode, set `directConnection=true` in the URI instead.
+
 ### Manage saved connections
 
 - **Open** starts a Mongo Express session using the saved settings.
