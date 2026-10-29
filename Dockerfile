@@ -17,7 +17,7 @@ LABEL \
     org.opencontainers.image.description="Run Mongo Express in Docker Desktop and connect to any MongoDB server." \
     org.opencontainers.image.vendor="Pawel Saniewski" \
     com.docker.desktop.extension.api.version="0.3.0" \
-    com.docker.desktop.extension.icon="https://raw.githubusercontent.com/Saniewski/mongo-express-docker-extension/main/favicon.ico" \
+    com.docker.desktop.extension.icon="https://raw.githubusercontent.com/Saniewski/mongo-express-docker-extension/main/favicon.png" \
     com.docker.extension.additional-urls=$ADDITIONAL_URLS \
     com.docker.extension.changelog=$CHANGELOG \
     com.docker.extension.detailed-description=$DETAILED_DESCRIPTION \
