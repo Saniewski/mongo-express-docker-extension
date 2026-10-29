@@ -1,6 +1,7 @@
 import { dockerExec } from "./dockerCli";
 import { getErrorMessage } from "./errors";
 import { MongoConnection } from "../types/MongoConnection";
+import { buildMongoConfig } from "./mongoConfig";
 
 const MONGO_EXPRESS_IMAGE = "mongo-express:latest";
 const MONGO_EXPRESS_PORT = 8081;
@@ -16,10 +17,11 @@ export async function startMongoExpress(
   connection: MongoConnection,
   launchId: string,
 ): Promise<number> {
+  const config = buildMongoConfig(connection);
   const containerName = getContainerName(connection.id, launchId);
   await removeContainer(containerName);
 
-  const target = await resolveMongoTarget(connection);
+  const target = await resolveMongoTarget(config.url);
   const args = [
     "run",
     "-d",
@@ -33,11 +35,16 @@ export async function startMongoExpress(
     `127.0.0.1::${MONGO_EXPRESS_PORT}`,
     "-e",
     `ME_CONFIG_MONGODB_URL=${target.url}`,
+    "-e",
+    `ME_CONFIG_MONGODB_ENABLE_ADMIN=${!connection.databaseScoped}`,
+    "-e",
+    `ME_CONFIG_MONGODB_SSL=${config.tls}`,
     // The UI is published only on loopback and opened inside Docker Desktop.
     "-e",
     "ME_CONFIG_BASICAUTH=false",
   ];
 
+  for (const mount of config.mounts) args.push("--mount", mount);
   if (target.network) args.push("--network", target.network);
   args.push(MONGO_EXPRESS_IMAGE);
 
@@ -72,7 +79,12 @@ export async function checkMongoExpress(
   if (inspect.code !== undefined && inspect.code !== 0) return null;
 
   const status = inspect.stdout?.trim().toLowerCase();
-  if (status === "exited" || status === "dead") return "exited";
+  if (status === "exited" || status === "dead") {
+    const logs = await dockerExec("logs", ["--tail", "100", containerName]);
+    const tlsError = getTlsStartupError(`${logs.stdout}\n${logs.stderr}`);
+    if (tlsError) throw new Error(tlsError);
+    return "exited";
+  }
   if (status !== "running") return null;
 
   const logs = await dockerExec("logs", [containerName]);
@@ -119,10 +131,7 @@ export async function cleanupMongoExpressContainers(): Promise<void> {
   }
 }
 
-async function resolveMongoTarget(
-  connection: MongoConnection,
-): Promise<{ url: string; network?: string }> {
-  let url = buildMongoUrl(connection);
+async function resolveMongoTarget(url: string): Promise<{ url: string; network?: string }> {
   const host = getHostname(url);
   const localMongo = await findLocalMongoContainer(host);
 
@@ -137,22 +146,6 @@ async function resolveMongoTarget(
     url = replaceHostname(url, "host.docker.internal");
   }
   return { url };
-}
-
-function buildMongoUrl(connection: MongoConnection): string {
-  if (connection.authMethod === "connectionString") {
-    const value = connection.connectionString?.trim();
-    if (!value) throw new Error("The MongoDB connection string is empty.");
-    return value;
-  }
-
-  const hostname = connection.hostname?.trim();
-  if (!hostname) throw new Error("The MongoDB hostname is required.");
-  const port = connection.port || 27017;
-  const credentials = connection.username
-    ? `${encodeURIComponent(connection.username)}:${encodeURIComponent(connection.password ?? "")}@`
-    : "";
-  return `mongodb://${credentials}${hostname}:${port}`;
 }
 
 function getHostname(url: string): string {
@@ -263,6 +256,24 @@ function assertSuccessful(result: Awaited<ReturnType<typeof dockerExec>>, operat
 
 function isMissingContainerError(error: unknown): boolean {
   return /no such container|no such object/i.test(getErrorMessage(error));
+}
+
+function getTlsStartupError(logs: string): string | undefined {
+  if (/certificate has expired|CERT_HAS_EXPIRED/i.test(logs)) {
+    return "A TLS certificate has expired. Renew the certificate or log in to your database proxy again.";
+  }
+  if (/ERR_TLS_CERT_ALTNAME_INVALID|Hostname\/IP does not match certificate/i.test(logs)) {
+    return "The server certificate does not match the MongoDB hostname. Use the hostname on the certificate, or allow a hostname mismatch in TLS settings for a trusted local proxy.";
+  }
+  if (/ENOENT|EACCES|EISDIR/.test(logs) && /\/etc\/mongo-express\/tls\//.test(logs)) {
+    return "A TLS certificate file could not be read. Select a readable PEM file and check Docker Desktop file sharing.";
+  }
+  if (/unable to verify|unable to get.*issuer certificate|self.signed certificate/i.test(logs)) {
+    return "The server TLS certificate is not trusted. Select the CA certificate supplied by your database provider.";
+  }
+  if (/PEM routines|ERR_OSSL_PEM|bad decrypt|key values mismatch/i.test(logs)) {
+    return "A TLS PEM file is invalid or its private key cannot be read. Check that the client PEM contains both the certificate and its matching private key.";
+  }
 }
 
 function wait(milliseconds: number): Promise<void> {
