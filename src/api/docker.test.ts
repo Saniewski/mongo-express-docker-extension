@@ -89,12 +89,56 @@ test.each([undefined, 0])(
 );
 
 test.each([undefined, 0])("detects readiness when the SDK exit code is %s", async (code) => {
-  exec.mockImplementation(async (command) =>
-    command === "inspect"
-      ? result("running\n", code)
-      : result("Mongo Express server listening at http://0.0.0.0:8081", code),
-  );
+  exec.mockImplementation(async (command) => {
+    if (command === "inspect") return result("running\n", code);
+    if (command === "exec") return result("MONGO_EXPRESS_HTTP_OK\n", code);
+    return result("Mongo Express server listening at http://0.0.0.0:8081", code);
+  });
   await expect(checkMongoExpress(connection.id, "launch")).resolves.toBe("up");
+});
+
+test("does not open an unanswered home page after Mongo Express starts listening", async () => {
+  let logReads = 0;
+  exec.mockImplementation(async (command) => {
+    if (command === "inspect") return result("running\n");
+    if (command === "logs" && ++logReads === 1) return result("Mongo Express server listening");
+    if (command === "logs") {
+      return result(
+        "MongoServerError: user is not allowed to do action [serverStatus] on [admin.]",
+      );
+    }
+    return result(
+      "",
+      1,
+      "Mongo Express did not respond to its home-page request within 5 seconds.",
+    );
+  });
+  await expect(checkMongoExpress(connection.id, "launch")).rejects.toThrow(
+    /cannot read server status.*Database-scoped mode/,
+  );
+  expect(logReads).toBe(2);
+});
+
+test.each([
+  [undefined, "", "", "could not load its home page"],
+  [1, "MONGO_EXPRESS_HTTP_OK\n", "HTTP request failed", "HTTP request failed"],
+  [1, "", "Mongo Express returned HTTP 500 with 100 bytes.", "returned HTTP 500"],
+  [1, "", "Mongo Express did not respond within 5 seconds.", "did not respond"],
+])("requires a successful home-page response: %s %s %s", async (code, stdout, stderr, expected) => {
+  exec.mockImplementation(async (command) => {
+    if (command === "inspect") return result("running\n");
+    if (command === "exec") return result(stdout, code, stderr);
+    return result("Mongo Express server listening");
+  });
+  await expect(checkMongoExpress(connection.id, "launch")).rejects.toThrow(expected);
+});
+
+test("waits for the web server before probing its home page", async () => {
+  exec.mockImplementation(async (command) =>
+    command === "inspect" ? result("running\n") : result("Connecting to MongoDB"),
+  );
+  await expect(checkMongoExpress(connection.id, "launch")).resolves.toBeNull();
+  expect(exec.mock.calls.some(([command]) => command === "exec")).toBe(false);
 });
 
 test.each(["exited", "dead"])(
@@ -206,7 +250,15 @@ test.each([
   ["ENOENT /etc/mongo-express/tls/client.pem", /could not be read/],
   ["unable to verify the first certificate", /not trusted/],
   ["ERR_OSSL_PEM_NO_START_LINE", /PEM file is invalid/],
-])("reports actionable TLS startup errors: %s", async (logs, message) => {
+  ["MongoServerError: command listDatabases requires authentication", /authMechanism=MONGODB-X509/],
+  ["MongoServerError: Authentication failed.", /authentication failed/],
+  [
+    "MongoServerError: not authorized on app to execute command { listCollections: 1 }",
+    /database roles/,
+  ],
+  ["MongoServerError: Unrecognized option", /Unrecognized option/],
+  ["MongoParseError: Invalid URI mongodb://user:secret@db", /mongodb:\/\/\[redacted\]@db/],
+])("reports actionable startup errors: %s", async (logs, message) => {
   exec.mockImplementation(async (command) =>
     command === "inspect" ? result("exited\n") : result(logs),
   );
@@ -223,21 +275,28 @@ test.each([undefined, 0])("tests a connection when the SDK exit code is %s", asy
     "ME_CONFIG_MONGODB_URL=mongodb://testuser:p%40ss%3Aword%2F%3F%23%25@host.docker.internal:27018",
   );
   expect(args).toContain("--rm");
+  expect(args).toContain("ME_CONFIG_MONGODB_ENABLE_ADMIN=true");
+  expect(args).toContain("ME_CONFIG_MONGODB_SSL=false");
   expect(args).not.toContain("-p");
   const containerName = args[args.indexOf("--name") + 1];
   expect(exec).toHaveBeenLastCalledWith("rm", ["-f", containerName]);
 });
 
-test.each([undefined, 0])("requires a successful ping, even with exit code %s", async (code) => {
-  exec.mockResolvedValue(result("", code));
-  await expect(testMongoConnection(connection)).rejects.toThrow(
-    "The connection test ended without a result.",
-  );
-  expect(exec).toHaveBeenLastCalledWith("rm", ["-f", expect.any(String)]);
-});
+test.each([undefined, 0])(
+  "requires successful permission checks, even with exit code %s",
+  async (code) => {
+    exec.mockResolvedValue(result("", code));
+    await expect(testMongoConnection(connection)).rejects.toThrow(
+      "The connection test ended without a result.",
+    );
+    expect(exec).toHaveBeenLastCalledWith("rm", ["-f", expect.any(String)]);
+  },
+);
 
 test.each([
-  [1, "Authentication failed.", "Authentication failed."],
+  [1, "Authentication failed.", "MongoDB authentication failed."],
+  [1, "command listDatabases requires authentication", "authMechanism=MONGODB-X509"],
+  [1, "user is not allowed to do action [serverStatus] on [admin.]", "Database-scoped mode"],
   [undefined, "connect ECONNREFUSED 192.0.2.1:27017", "connect ECONNREFUSED 192.0.2.1:27017"],
   [1, "certificate has expired", "A TLS certificate has expired."],
   [1, "The connection test timed out after 15 seconds.", "timed out after 15 seconds"],
@@ -272,6 +331,8 @@ test.each(["basic", "connectionString"] as const)(
     });
     const args = exec.mock.calls.find(([command]) => command === "run")![1];
     expect(args[args.indexOf("--network") + 1]).toBe("app-network");
+    expect(args).toContain("ME_CONFIG_MONGODB_ENABLE_ADMIN=false");
+    expect(args).toContain("ME_CONFIG_MONGODB_SSL=true");
     expect(args.filter((arg) => arg === "--mount")).toHaveLength(2);
     expect(args).toContain(
       'type=bind,"source=/certs/client.pem",target=/etc/mongo-express/tls/client.pem,readonly',
