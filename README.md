@@ -1,9 +1,7 @@
 # Mongo Express Docker Extension
 
-Run Mongo Express in Docker Desktop and connect to any MongoDB server.
-
-Mongo Express Docker Extension allows you to connect to any (local or remote) MongoDB server
-without having to install Mongo Express locally or manually create a Mongo Express Docker container.
+Browse and manage MongoDB databases with Mongo Express inside Docker Desktop. Connect to a local or
+remote MongoDB server without installing Mongo Express yourself or configuring its container manually.
 
 ## Features
 
@@ -11,13 +9,11 @@ without having to install Mongo Express locally or manually create a Mongo Expre
 - Connect using a hostname and optional credentials or a MongoDB connection string.
 - Configure TLS with a custom CA and client certificate/key PEM files.
 - Limit Mongo Express to one database with database-scoped mode.
-- Start a Mongo Express container by opening a connection.
-- Remove the container by closing the connection and returning to the connections page. Containers left behind by an interrupted session are cleaned up the next time the home page opens.
-- Scope cleanup to containers labeled as belonging to this extension.
+- Open Mongo Express for a saved connection and remove its container when you return to the connections page.
 
 ## Installation
 
-Install the extension from the Docker Desktop marketplace:
+Start Docker Desktop with Extensions enabled, then install the extension from the marketplace:
 
 https://open.docker.com/extensions/marketplace?extensionId=saniewski/mongo-express-docker-extension&tag=1.0.2
 
@@ -29,29 +25,115 @@ docker extension install saniewski/mongo-express-docker-extension:1.0.2
 
 ## Usage
 
-Use **Add connection** on the home page to save a connection. The **Host and credentials** option accepts a MongoDB hostname, port, and optional username/password. The **Connection string** option accepts a MongoDB URI. Select **Open** to start Mongo Express for that connection; returning to the connections page stops and removes its container.
+You need a running MongoDB server reachable from Docker Desktop. The extension starts Mongo Express;
+you provide the MongoDB server and any credentials it requires.
 
-For a MongoDB server running on the Docker Desktop host, use `host.docker.internal` or `localhost` as the host. `localhost` is translated to `host.docker.internal` for the Mongo Express container. For another MongoDB container, use its container name and ensure it shares a Docker network with the extension-managed Mongo Express container; the extension automatically joins a matching local MongoDB container's network when possible.
+### Open your first connection
 
-Saved connection details, including credentials, are stored in the Docker Desktop extension's browser `localStorage`. They are not sent anywhere by the extension. Remove saved connections you no longer need, and avoid saving secrets on a shared desktop account.
+1. Open **Mongo Express** from the **Extensions** section in Docker Desktop.
+2. Select **Add connection** and enter a **Connection name**, such as `Local development`.
+3. Choose **Host and credentials** to enter a **Hostname**, **Port** (usually `27017`), and optional username/password. Choose **Connection string** to paste a `mongodb://` or `mongodb+srv://` URI instead.
+4. If needed, configure **Database-scoped mode** or **TLS settings** as described below.
+5. Select **Add connection** to save the details, then select **Open** in the connections table.
+6. Wait for **Starting Mongo Express…** to finish. The first launch may take longer while Docker downloads the Mongo Express image.
+7. In Mongo Express, select a database and collection to browse documents. Your MongoDB account permissions determine which read and write operations are available.
+8. Select **Connections** at the top to end the session and return to your saved connections.
+
+Saving a connection does not test it or start a container. The extension connects when you select **Open**.
+
+### Choose a MongoDB address
+
+| MongoDB location                     | What to enter                                                                                        | Notes                                                                                                    |
+| ------------------------------------ | ---------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| On your computer                     | Hostname `host.docker.internal`, with the MongoDB port                                               | For a single-host connection, `localhost` and `127.0.0.1` are also translated to `host.docker.internal`. |
+| In a local Docker container          | The running container name, for example `my-mongo`, with its internal MongoDB port (usually `27017`) | The extension joins a matching MongoDB container network when it recognizes the image.                   |
+| In a container with a published port | Hostname `host.docker.internal`, with the published host port                                        | For a mapping of `27018:27017`, enter port `27018`.                                                      |
+| On a remote server                   | The server hostname and port, or the connection string supplied by your provider                     | The server must allow connections from your network.                                                     |
+| In MongoDB Atlas                     | The `mongodb+srv://` connection string supplied by Atlas                                             | Use a database user and allow your client IP address in Atlas network access settings.                   |
+
+Automatic container network selection recognizes the `mongo`, `bitnami/mongodb`, and `circleci/mongo`
+images. Use the exact container name, not just a Compose service name. For custom images or network
+setups where automatic selection does not work, publish the MongoDB port and connect through
+`host.docker.internal`.
+
+For example, these connection strings connect to a local server, a local server with credentials, and
+an Atlas cluster respectively. Replace the example credentials and cluster hostname with your own:
+
+```text
+mongodb://host.docker.internal:27017
+mongodb://app-user:password@host.docker.internal:27017/app?authSource=admin
+mongodb+srv://app-user:password@cluster.example.mongodb.net/app?authSource=admin
+```
+
+In a URI, percent-encode special characters in usernames and passwords, such as `@` as `%40`.
+With **Host and credentials**, enter credentials normally; the extension handles encoding.
+See the [MongoDB connection string documentation](https://www.mongodb.com/docs/manual/reference/connection-string/)
+for options such as `authSource` and replica set settings.
+
+### Manage saved connections
+
+- **Open** starts a Mongo Express session using the saved settings.
+- The **pencil icon** opens **Edit connection**. Update the fields and select **Save changes**.
+- The **trash icon** opens a confirmation dialog. Select **Delete** to remove the saved connection.
+
+Returning with **Connections** stops and removes the session container while keeping your saved
+connection. Containers left behind by an interrupted session are cleaned up when the connections page
+next opens. Closing or deleting a saved connection does not remove your MongoDB server or its data.
+
+Saved connection details, including passwords and credentials in URIs, remain in the Docker Desktop
+extension's browser `localStorage` and are not encrypted by the extension. Remove saved connections you
+no longer need, and avoid saving secrets on a shared desktop account.
 
 ### Database-scoped mode
 
-Enable **Database-scoped mode** for an account that should browse a single database. With **Host and credentials**, enter the **Database name**. With **Connection string**, include it in the URI, for example `mongodb://localhost:27017/app`.
+Enable **Database-scoped mode** when you want Mongo Express to show one database, including when your
+account cannot list all databases:
 
-This disables Mongo Express's admin features and prevents it from listing other databases. It does not change the account's read/write permissions. Host-and-credentials connections continue to authenticate against `admin`; use a URI with `authSource` if the account authenticates against another database. Existing connections keep admin mode until you enable database-scoped mode.
+- With **Host and credentials**, fill in **Database name**, for example `app`.
+- With **Connection string**, include the database in the URI path, for example `mongodb://host.docker.internal:27017/app`.
+
+This disables Mongo Express's admin features and limits browsing to that database. MongoDB still
+enforces the account's read/write permissions. The mode is off by default; adding a database to a URI
+alone does not enable it.
+
+**Host and credentials** authenticates against `admin`. If the user was created in another database,
+use **Connection string** with the appropriate `authSource`. For example, a user created in `app` can use:
+
+```text
+mongodb://app-user:password@host.docker.internal:27017/app?authSource=app
+```
 
 ### TLS settings
 
-Enable **TLS settings** to configure certificate authentication or a custom certificate authority:
+Enable **TLS settings** to turn on TLS and optionally configure a custom certificate authority or a
+client certificate:
 
 - **CA certificate**: an optional PEM file containing the CA certificate(s). Leave it empty to use the Mongo Express container's trusted authorities.
 - **Client certificate/key**: an optional PEM file containing both the client certificate and its matching private key. If your provider supplies separate files, combine them into a private PEM file on your computer first.
 - **Allow certificate hostname mismatch**: off by default. Enable only for a trusted local proxy whose server certificate does not name the address used to reach it. CA verification remains enabled.
 
-Use **Browse** or enter an absolute path on the Docker Desktop host. Docker Desktop must be able to access the files. The extension stores only their paths and mounts the selected files read-only into Mongo Express. Close and reopen the connection after renewing or replacing certificates.
+Use **Browse** or enter an absolute path on the Docker Desktop host. Docker Desktop must be able to
+access the files through its file sharing settings. The extension stores only their paths and mounts
+the selected files read-only into Mongo Express. Save the connection, then open it to apply the settings.
+Close and reopen the connection after renewing or replacing certificates.
 
 Enabled TLS settings override the certificate paths and verification options in the URI. When disabled, no certificate files are mounted and TLS follows the URI, including the default TLS behavior of `mongodb+srv://`.
+
+### Troubleshooting
+
+If **Service Unavailable** appears, read the error message. Select **Back to connections** to edit the
+saved settings, or **Try again** to retry with the same settings after fixing the problem.
+
+| Problem                                                  | What to check                                                                                                                                                                                                       |
+| -------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Mongo Express does not become ready within 60 seconds    | Check that Docker Desktop and MongoDB are running, the address and port are correct, and Docker can download the Mongo Express image. Retry once the image download finishes.                                       |
+| Connection refused or server unreachable                 | Check the host or container address above, port publishing, VPN/firewall rules, and any provider IP access list. MongoDB must listen on an interface reachable from Docker Desktop.                                 |
+| Authentication or database access fails                  | Check the credentials and `authSource`. For an account limited to one database, enable **Database-scoped mode** and supply its database name.                                                                       |
+| Certificate file cannot be read                          | Choose an existing, readable PEM file using an absolute path and check Docker Desktop file sharing. A client PEM must contain both the certificate and its matching private key.                                    |
+| Certificate is untrusted, expired, or names another host | Select the correct CA, renew expired certificates, and use the hostname on the server certificate. Use **Allow certificate hostname mismatch** only for a trusted local proxy. Reopen the connection after changes. |
+
+If the problem persists, select **Report an issue** on the error page and include the error message
+with any credentials removed.
 
 ## Development
 
