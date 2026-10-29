@@ -2,12 +2,9 @@ import { useEffect, useState } from "react";
 import { Alert, CircularProgress, Container } from "@mui/material";
 import { useNavigate } from "react-router";
 import { cleanupMongoExpressContainers, removeMongoExpress } from "../api/docker";
-import {
-  loadConnections,
-  saveConnections,
-  createConnectionId,
-} from "../api/connections";
+import { loadConnections, saveConnections, createConnectionId } from "../api/connections";
 import { ddToast } from "../api/utils";
+import { getErrorMessage } from "../api/errors";
 import { ConnectionForm } from "../components/ConnectionForm/ConnectionForm";
 import { ExtensionHeader } from "../components/ExtensionHeader/ExtensionHeader";
 import { ExtensionFooter } from "../components/ExtensionFooter/ExtensionFooter";
@@ -28,7 +25,7 @@ export const HomePage = () => {
   useEffect(() => {
     cleanupMongoExpressContainers()
       .catch((error: unknown) => {
-        ddToast.error(error instanceof Error ? error.message : String(error));
+        ddToast.error(getErrorMessage(error));
       })
       .finally(() => setPreparing(false));
   }, []);
@@ -54,7 +51,7 @@ export const HomePage = () => {
       setEditingConnection(undefined);
       ddToast.success(editingConnection ? "Connection updated." : "Connection added.");
     } catch (error) {
-      ddToast.error(error instanceof Error ? error.message : String(error));
+      ddToast.error(getErrorMessage(error));
     }
   };
 
@@ -69,7 +66,7 @@ export const HomePage = () => {
       setDeletingConnection(undefined);
       ddToast.success("Connection deleted.");
     } catch (error) {
-      ddToast.error(error instanceof Error ? error.message : String(error));
+      ddToast.error(getErrorMessage(error));
     } finally {
       setDeleting(false);
     }

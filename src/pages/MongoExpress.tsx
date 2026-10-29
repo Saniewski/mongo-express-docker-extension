@@ -5,6 +5,7 @@ import { useNavigate, useParams } from "react-router";
 import { checkMongoExpress, removeMongoExpress, startMongoExpress } from "../api/docker";
 import { loadConnections } from "../api/connections";
 import { ddToast } from "../api/utils";
+import { getErrorMessage } from "../api/errors";
 import { ServiceUnavailable } from "../components/ServiceUnavailable/ServiceUnavailable";
 
 const STARTUP_TIMEOUT_MS = 60_000;
@@ -84,7 +85,7 @@ export const MongoExpressPage = () => {
     void Promise.race([startupFlow(), startupTimeout])
       .catch((error: unknown) => {
         if (!cancelled) {
-          setErrorMessage(error instanceof Error ? error.message : String(error));
+          setErrorMessage(getErrorMessage(error));
           setLoading(false);
           removeMongoExpress(connection.id, launchId).catch((cleanupError: unknown) => {
             console.error("Failed to remove Mongo Express container", cleanupError);
@@ -98,7 +99,7 @@ export const MongoExpressPage = () => {
       window.clearTimeout(timeoutId);
       removeMongoExpress(connection.id, launchId).catch((error: unknown) => {
         console.error("Failed to remove Mongo Express container", error);
-        ddToast.error(error instanceof Error ? error.message : String(error));
+        ddToast.error(getErrorMessage(error));
       });
       document.body.classList.remove("full-screen-body");
       document.getElementById("root")?.classList.remove("full-screen-root");
