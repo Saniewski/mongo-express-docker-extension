@@ -1,7 +1,12 @@
 import type { v1 } from "@docker/extension-api-client-types";
 import type { MongoConnection } from "../types/MongoConnection";
 import { dockerExec } from "./dockerCli";
-import { startMongoExpress, checkMongoExpress, removeMongoExpress } from "./docker";
+import {
+  startMongoExpress,
+  checkMongoExpress,
+  removeMongoExpress,
+  testMongoConnection,
+} from "./docker";
 
 jest.mock("./dockerCli", () => ({ dockerExec: jest.fn() }));
 
@@ -198,4 +203,112 @@ test.each([
     command === "inspect" ? result("exited\n") : result(logs),
   );
   await expect(checkMongoExpress(connection.id, "launch")).rejects.toThrow(message);
+});
+
+test.each([undefined, 0])("tests a connection when the SDK exit code is %s", async (code) => {
+  exec.mockImplementation(async (command) =>
+    command === "run" ? result("MONGO_CONNECTION_TEST_OK\n", code) : result(),
+  );
+  await expect(testMongoConnection(connection)).resolves.toBeUndefined();
+  const args = exec.mock.calls.find(([command]) => command === "run")![1];
+  expect(args).toContain(
+    "ME_CONFIG_MONGODB_URL=mongodb://testuser:p%40ss%3Aword%2F%3F%23%25@host.docker.internal:27018",
+  );
+  expect(args).toContain("--rm");
+  expect(args).not.toContain("-p");
+  const containerName = args[args.indexOf("--name") + 1];
+  expect(exec).toHaveBeenLastCalledWith("rm", ["-f", containerName]);
+});
+
+test.each([undefined, 0])("requires a successful ping, even with exit code %s", async (code) => {
+  exec.mockResolvedValue(result("", code));
+  await expect(testMongoConnection(connection)).rejects.toThrow(
+    "The connection test ended without a result.",
+  );
+  expect(exec).toHaveBeenLastCalledWith("rm", ["-f", expect.any(String)]);
+});
+
+test.each([
+  [1, "Authentication failed.", "Authentication failed."],
+  [undefined, "connect ECONNREFUSED 192.0.2.1:27017", "connect ECONNREFUSED 192.0.2.1:27017"],
+  [1, "certificate has expired", "A TLS certificate has expired."],
+  [1, "The connection test timed out after 15 seconds.", "timed out after 15 seconds"],
+  [125, "invalid mount config: bind source path does not exist", "bind source path does not exist"],
+  [1, "Failed: mongodb://user:secret@host/app", "Failed: mongodb://[redacted]@host/app"],
+])("reports connection test failure %s: %s", async (code, stderr, expected) => {
+  exec.mockImplementation(async (command) =>
+    command === "run" ? result("", code, stderr) : result(),
+  );
+  await expect(testMongoConnection(connection)).rejects.toThrow(expected);
+  expect(exec).toHaveBeenLastCalledWith("rm", ["-f", expect.any(String)]);
+});
+
+test("tests scoped TLS settings on the MongoDB container's network", async () => {
+  exec.mockImplementation(async (command) => {
+    if (command === "ps") return result("database|mongo:9|app-network\n");
+    if (command === "run") return result("MONGO_CONNECTION_TEST_OK\n");
+    return result();
+  });
+  await testMongoConnection({
+    ...connection,
+    authMethod: "connectionString",
+    connectionString: "mongodb://user:password@database/app?authSource=admin&directConnection=true",
+    databaseScoped: true,
+    tls: { enabled: true, caFile: "/certs/ca.pem", certificateKeyFile: "/certs/client.pem" },
+  });
+  const args = exec.mock.calls.find(([command]) => command === "run")![1];
+  expect(args[args.indexOf("--network") + 1]).toBe("app-network");
+  expect(args.filter((arg) => arg === "--mount")).toHaveLength(2);
+  expect(args).toContain(
+    'type=bind,"source=/certs/client.pem",target=/etc/mongo-express/tls/client.pem,readonly',
+  );
+  const uri = new URL(
+    args
+      .find((arg) => arg.startsWith("ME_CONFIG_MONGODB_URL="))!
+      .split("ME_CONFIG_MONGODB_URL=")[1],
+  );
+  expect(uri.hostname).toBe("database");
+  expect(uri.pathname).toBe("/app");
+  expect(uri.searchParams.get("authSource")).toBe("admin");
+  expect(uri.searchParams.get("directConnection")).toBe("true");
+  expect(uri.searchParams.get("tls")).toBe("true");
+  expect(uri.searchParams.get("tlsCertificateKeyFile")).toBe("/etc/mongo-express/tls/client.pem");
+});
+
+test("connection tests use unique containers without removing a saved session", async () => {
+  exec.mockImplementation(async (command) =>
+    command === "run" ? result("MONGO_CONNECTION_TEST_OK\n") : result(),
+  );
+  await testMongoConnection(connection);
+  await testMongoConnection(connection);
+  const names = exec.mock.calls
+    .filter(([command]) => command === "run")
+    .map(([, args]) => args[args.indexOf("--name") + 1]);
+  expect(new Set(names).size).toBe(2);
+  expect(names.every((name) => name.startsWith("dd-ext-mongo-express-test-"))).toBe(true);
+  expect(exec.mock.calls.filter(([command]) => command === "rm")).toEqual(
+    names.map((name) => ["rm", ["-f", name]]),
+  );
+});
+
+test("invalid test settings fail before contacting Docker", async () => {
+  await expect(testMongoConnection({ ...connection, hostname: "" })).rejects.toThrow(
+    "The MongoDB hostname is required.",
+  );
+  expect(exec).not.toHaveBeenCalled();
+});
+
+test("preserves the connection error when cleanup fails after an SDK rejection", async () => {
+  const cleanupError = jest.spyOn(console, "error").mockImplementation(() => undefined);
+  exec.mockImplementation(async (command) => {
+    if (command === "run") throw { stderr: "Docker Desktop is unavailable" };
+    if (command === "rm") throw new Error("Cleanup failed");
+    return result();
+  });
+  try {
+    await expect(testMongoConnection(connection)).rejects.toThrow("Docker Desktop is unavailable");
+    expect(exec).toHaveBeenLastCalledWith("rm", ["-f", expect.any(String)]);
+  } finally {
+    cleanupError.mockRestore();
+  }
 });

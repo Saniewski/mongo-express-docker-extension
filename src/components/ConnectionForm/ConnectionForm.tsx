@@ -17,6 +17,8 @@ import {
 } from "@mui/material";
 import { MongoConnection } from "../../types/MongoConnection";
 import { getConnectionSettingsError } from "../../api/mongoConfig";
+import { testMongoConnection } from "../../api/docker";
+import { getErrorMessage } from "../../api/errors";
 import { CertificateFileField } from "./CertificateFileField";
 
 type ConnectionFormProps = {
@@ -56,9 +58,33 @@ export const ConnectionForm = ({ open, connection, onClose, onSave }: Connection
         }
       : { ...emptyConnection },
   );
+  const [isTesting, setTesting] = useState(false);
+  const [testResult, setTestResult] = useState<{
+    form: typeof form;
+    severity: "success" | "error";
+    message: string;
+  }>();
 
   const settingsError = getConnectionSettingsError(form);
-  const canSave = form.name.trim().length > 0 && !settingsError;
+  const canSave = form.name.trim().length > 0 && !settingsError && !isTesting;
+
+  const handleTest = async () => {
+    if (settingsError || isTesting) return;
+    setTesting(true);
+    setTestResult(undefined);
+    try {
+      await testMongoConnection(form);
+      setTestResult({ form, severity: "success", message: "Connection successful." });
+    } catch (error) {
+      setTestResult({
+        form,
+        severity: "error",
+        message: `Connection failed: ${getErrorMessage(error)}`,
+      });
+    } finally {
+      setTesting(false);
+    }
+  };
 
   const updateTls = (settings: Partial<NonNullable<MongoConnection["tls"]>>) => {
     setForm((current) => ({
@@ -248,7 +274,21 @@ export const ConnectionForm = ({ open, connection, onClose, onSave }: Connection
             {settingsError && <Alert severity="error">{settingsError}</Alert>}
           </Stack>
         </DialogContent>
+        {testResult?.form === form && (
+          <Alert severity={testResult.severity} sx={{ mx: 3, mb: 2, overflowWrap: "anywhere" }}>
+            {testResult.message}
+          </Alert>
+        )}
         <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button
+            type="button"
+            onClick={handleTest}
+            disabled={!!settingsError || isTesting}
+            loading={isTesting}
+            sx={{ mr: "auto" }}
+          >
+            {isTesting ? "Testing…" : "Test connection"}
+          </Button>
           <Button onClick={onClose}>Cancel</Button>
           <Button type="submit" variant="contained" disabled={!canSave}>
             {connection ? "Save changes" : "Add connection"}
