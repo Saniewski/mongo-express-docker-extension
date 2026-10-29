@@ -12,13 +12,13 @@ These are the steps to follow if you want to contribute code to the project (eit
 feature).
 
 1. [Fork the repository](https://help.github.com/articles/fork-a-repo/) to your own GitHub account and then
-[clone it](https://help.github.com/articles/cloning-a-repository/) to your local device.
+   [clone it](https://help.github.com/articles/cloning-a-repository/) to your local device.
 2. Create a new branch for your changes: `git checkout -b my-branch-name`.
 3. Make and test your changes.
 4. Commit your changes: `git commit -m "My message"`.
 5. Push your changes to your fork: `git push origin my-branch-name`.
 6. [Submit a pull request](https://help.github.com/articles/creating-a-pull-request-from-a-fork/) to the `main` branch
-of the main repository.
+   of the main repository.
 7. Pat yourself on the back and wait for your pull request to be reviewed and merged.
 8. Celebrate your contribution to the project! 🎉
 

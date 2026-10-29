@@ -1,4 +1,5 @@
 **Pull request subject**
+
 - [ ] Feature
 - [ ] Bugfix
 - [ ] Code style update (formatting, renaming)
@@ -12,6 +13,7 @@ Please, link the issue here (Resolves #xx, #xx, ...).
 
 **Checklist:**
 Check all that apply (append **NA** if not applicable):
+
 - [ ] I have read the Contributing Guidelines.
 - [ ] I have checked to ensure there aren't other open Pull Requests for the same update/change.
 - [ ] My code follows the code style of this project.

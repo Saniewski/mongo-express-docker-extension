@@ -144,10 +144,47 @@ with any credentials removed.
 
 ## Development
 
+Use Node.js 24 (see `.nvmrc`) and pnpm 12.6.0, pinned in `package.json`. With
+[nvm](https://github.com/nvm-sh/nvm) installed, set up the toolchain and dependencies:
+
 ```bash
-pnpm install
-pnpm dev
-pnpm build
+nvm install
+nvm use
+corepack enable
+pnpm install --frozen-lockfile
 ```
 
-Build and install the Docker Desktop extension with `make install-extension`.
+Start Docker Desktop and build and install the extension:
+
+```bash
+make install-extension
+```
+
+If the extension is already installed, use `make update-extension` instead.
+
+Start the development server:
+
+```bash
+pnpm dev
+```
+
+In another terminal, point the installed extension at the local server:
+
+```bash
+make use-local-ui
+```
+
+Open Mongo Express inside Docker Desktop to test changes with the extension SDK and Docker theme.
+Use `make use-devtools` to open its developer tools. Run `make reset-dev` to return to the packaged UI.
+
+Run the checks before submitting changes:
+
+```bash
+pnpm build
+pnpm test --runInBand
+pnpm lint
+pnpm format:check
+```
+
+The build checks both the application and `vite.config.ts` types before bundling. To check types
+without producing a build, run `pnpm typecheck`.

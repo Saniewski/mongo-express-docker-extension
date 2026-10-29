@@ -63,7 +63,10 @@ export const ConnectionsTable = ({
                 >
                   Open
                 </Button>
-                <IconButton aria-label={`Edit ${connection.name}`} onClick={() => onEdit(connection)}>
+                <IconButton
+                  aria-label={`Edit ${connection.name}`}
+                  onClick={() => onEdit(connection)}
+                >
                   <EditOutlinedIcon />
                 </IconButton>
                 <IconButton
