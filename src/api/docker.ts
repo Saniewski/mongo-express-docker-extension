@@ -175,9 +175,7 @@ export async function removeMongoExpress(connectionId: string, launchId?: string
     .split(/\r?\n/)
     .map((line) => line.trim())
     .filter(Boolean);
-  if (containerIds.length > 0) {
-    await runDocker(["rm", "-f", ...containerIds]);
-  }
+  await Promise.all(containerIds.map(removeContainer));
 }
 
 /** Removes only containers carrying this extension's ownership label. */
@@ -192,9 +190,7 @@ export async function cleanupMongoExpressContainers(): Promise<void> {
     .split(/\r?\n/)
     .map((line) => line.trim())
     .filter(Boolean);
-  if (containerIds.length > 0) {
-    await runDocker(["rm", "-f", ...containerIds]);
-  }
+  await Promise.all(containerIds.map(removeContainer));
 }
 
 async function resolveMongoTarget(url: string): Promise<{ url: string; network?: string }> {
@@ -292,18 +288,19 @@ function getContainerName(connectionId: string, launchId: string): string {
 }
 
 async function removeContainer(containerName: string): Promise<void> {
-  // A missing container is expected when closing a connection or cleaning an old install.
+  // Page teardown and Connections cleanup can remove the same container concurrently.
+  // Use a command per container so an expected race cannot hide another container's failure.
   let result;
   try {
     result = await dockerExec("rm", ["-f", containerName]);
   } catch (error) {
-    if (isMissingContainerError(error)) return;
+    if (isExpectedRemovalError(error)) return;
     throw error;
   }
 
   const failed = result.code !== undefined ? result.code !== 0 : !!result.stderr.trim();
   if (failed) {
-    if (isMissingContainerError(result.stderr)) return;
+    if (isExpectedRemovalError(result.stderr)) return;
     throw new Error(getErrorMessage(result, `Failed to remove container ${containerName}.`));
   }
 }
@@ -320,8 +317,10 @@ function assertSuccessful(result: Awaited<ReturnType<typeof dockerExec>>, operat
   }
 }
 
-function isMissingContainerError(error: unknown): boolean {
-  return /no such container|no such object/i.test(getErrorMessage(error));
+function isExpectedRemovalError(error: unknown): boolean {
+  return /no such container|no such object|removal of container \S+ is already in progress/i.test(
+    getErrorMessage(error),
+  );
 }
 
 function getMongoStartupError(logs: string): string | undefined {

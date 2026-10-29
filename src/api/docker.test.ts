@@ -4,6 +4,7 @@ import { dockerExec } from "./dockerCli";
 import {
   startMongoExpress,
   checkMongoExpress,
+  cleanupMongoExpressContainers,
   removeMongoExpress,
   testMongoConnection,
 } from "./docker";
@@ -177,6 +178,92 @@ test("removes the container if Docker never assigns a port", async () => {
 test("ignores missing containers reported through an SDK rejection", async () => {
   exec.mockRejectedValue({ stderr: "Error response from daemon: No such container: test" });
   await expect(removeMongoExpress(connection.id, "launch")).resolves.toBeUndefined();
+});
+
+describe.each([
+  ["session cleanup", () => removeMongoExpress(connection.id, "launch")],
+  ["connection deletion", () => removeMongoExpress(connection.id)],
+  ["Connections page cleanup", cleanupMongoExpressContainers],
+])("%s", (_name, cleanup) => {
+  test.each([1, undefined, "rejection"] as const)(
+    "tolerates a removal already in progress with SDK result %s",
+    async (code) => {
+      const stderr =
+        "Error response from daemon: removal of container abc123 is already in progress";
+      exec.mockImplementation(async (command, args) => {
+        if (command === "ps") return result("abc123\n");
+        if (args.includes("dd-ext-mongo-express")) return result();
+        if (code === "rejection") throw new Error(stderr);
+        return result("", code, stderr);
+      });
+
+      await expect(cleanup()).resolves.toBeUndefined();
+    },
+  );
+});
+
+describe.each([
+  ["connection deletion", () => removeMongoExpress(connection.id)],
+  ["Connections page cleanup", cleanupMongoExpressContainers],
+])("%s", (_name, cleanup) => {
+  test("tolerates a container disappearing after it was listed", async () => {
+    exec.mockImplementation(async (command, args) => {
+      if (command === "ps") return result("abc123\n");
+      if (args.includes("dd-ext-mongo-express")) return result();
+      return result("", 1, "Error response from daemon: No such container: abc123");
+    });
+
+    await expect(cleanup()).resolves.toBeUndefined();
+  });
+
+  test.each([1, undefined, "rejection"] as const)(
+    "preserves other removal errors with SDK result %s",
+    async (code) => {
+      exec.mockImplementation(async (command, args) => {
+        if (command === "ps") return result("abc123\ndef456\n");
+        if (args.includes("dd-ext-mongo-express")) return result();
+        const stderr = args
+          .slice(1)
+          .map((id) =>
+            id === "abc123"
+              ? `Error response from daemon: removal of container ${id} is already in progress`
+              : `Error response from daemon: cannot remove container ${id}: permission denied`,
+          )
+          .join("\n");
+        if (code === "rejection") throw new Error(stderr);
+        return result("", code, stderr);
+      });
+
+      await expect(cleanup()).rejects.toThrow("permission denied");
+    },
+  );
+});
+
+test("returning to Connections tolerates cleanup overlapping the session removal", async () => {
+  let finishRemoval!: (value: v1.RawExecResult) => void;
+  const removal = new Promise<v1.RawExecResult>((resolve) => {
+    finishRemoval = resolve;
+  });
+  exec.mockImplementation(async (command, args) => {
+    if (command === "ps") return result("abc123\n");
+    if (args.includes("dd-ext-mongo-express-test-connection-launch")) return removal;
+    if (args.includes("abc123")) {
+      return result(
+        "",
+        1,
+        "Error response from daemon: removal of container abc123 is already in progress",
+      );
+    }
+    return result();
+  });
+
+  const sessionCleanup = removeMongoExpress(connection.id, "launch");
+  try {
+    await expect(cleanupMongoExpressContainers()).resolves.toBeUndefined();
+  } finally {
+    finishRemoval(result());
+    await sessionCleanup;
+  }
 });
 
 test("keeps the startup error if cleanup also fails", async () => {
