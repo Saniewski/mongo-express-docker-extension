@@ -1,4 +1,5 @@
-import { ddClient } from "./utils";
+import { dockerExec } from "./dockerCli";
+import { getErrorMessage } from "./errors";
 import { MongoConnection } from "../types/MongoConnection";
 
 const MONGO_EXPRESS_IMAGE = "mongo-express:latest";
@@ -32,6 +33,9 @@ export async function startMongoExpress(
     `127.0.0.1::${MONGO_EXPRESS_PORT}`,
     "-e",
     `ME_CONFIG_MONGODB_URL=${target.url}`,
+    // The UI is published only on loopback and opened inside Docker Desktop.
+    "-e",
+    "ME_CONFIG_BASICAUTH=false",
   ];
 
   if (target.network) args.push("--network", target.network);
@@ -42,15 +46,18 @@ export async function startMongoExpress(
   try {
     for (let attempt = 0; attempt < 10; attempt++) {
       const result = await dockerExec("port", [containerName, `${MONGO_EXPRESS_PORT}/tcp`]);
-      if (result.code === 0) {
-        const port = result.stdout.match(/:(\d+)\s*$/m)?.[1];
+      // Successful Docker Desktop SDK responses may omit the exit code.
+      if (result.code === undefined || result.code === 0) {
+        const port = result.stdout?.match(/:(\d+)\s*$/m)?.[1];
         if (port) return Number(port);
       }
       await wait(250);
     }
     throw new Error("Docker did not assign a host port to Mongo Express.");
   } catch (error) {
-    await removeContainer(containerName);
+    await removeContainer(containerName).catch((cleanupError: unknown) => {
+      console.error("Failed to remove Mongo Express container", getErrorMessage(cleanupError));
+    });
     throw error;
   }
 }
@@ -62,9 +69,9 @@ export async function checkMongoExpress(
 ): Promise<"up" | "exited" | null> {
   const containerName = getContainerName(connectionId, launchId);
   const inspect = await dockerExec("inspect", ["--format={{.State.Status}}", containerName]);
-  if (inspect.code !== 0) return null;
+  if (inspect.code !== undefined && inspect.code !== 0) return null;
 
-  const status = inspect.stdout.trim().toLowerCase();
+  const status = inspect.stdout?.trim().toLowerCase();
   if (status === "exited" || status === "dead") return "exited";
   if (status !== "running") return null;
 
@@ -86,8 +93,8 @@ export async function removeMongoExpress(connectionId: string, launchId?: string
     `label=${CONNECTION_LABEL}=${connectionId}`,
   ]);
   assertSuccessful(result, "list containers for the connection");
-  const containerIds = result
-    .lines()
+  const containerIds = result.stdout
+    .split(/\r?\n/)
     .map((line) => line.trim())
     .filter(Boolean);
   if (containerIds.length > 0) {
@@ -103,8 +110,8 @@ export async function cleanupMongoExpressContainers(): Promise<void> {
   const result = await dockerExec("ps", ["-aq", "--filter", `label=${OWNER_LABEL}=true`]);
   assertSuccessful(result, "list extension containers");
 
-  const containerIds = result
-    .lines()
+  const containerIds = result.stdout
+    .split(/\r?\n/)
     .map((line) => line.trim())
     .filter(Boolean);
   if (containerIds.length > 0) {
@@ -238,37 +245,24 @@ async function removeContainer(containerName: string): Promise<void> {
   const failed = result.code !== undefined ? result.code !== 0 : !!result.stderr.trim();
   if (failed) {
     if (isMissingContainerError(result.stderr)) return;
-    throw new Error(result.stderr.trim() || `Failed to remove container ${containerName}.`);
+    throw new Error(getErrorMessage(result, `Failed to remove container ${containerName}.`));
   }
 }
 
 async function runDocker(args: string[]) {
   const result = await dockerExec(args[0], args.slice(1));
-  assertSuccessful(result, `docker ${args.join(" ")}`);
+  assertSuccessful(result, `docker ${args[0]}`);
   return result;
-}
-
-function dockerExec(command: string, args: string[]) {
-  return ddClient.docker.cli.exec(command, args);
 }
 
 function assertSuccessful(result: Awaited<ReturnType<typeof dockerExec>>, operation: string): void {
   if (result.code !== undefined && result.code !== 0) {
-    throw new Error(result.stderr.trim() || `Failed to ${operation}.`);
+    throw new Error(getErrorMessage(result, `Failed to ${operation}.`));
   }
 }
 
 function isMissingContainerError(error: unknown): boolean {
-  const message =
-    typeof error === "string"
-      ? error
-      : error && typeof error === "object"
-        ? [
-            error instanceof Error ? error.message : "",
-            "stderr" in error ? String(error.stderr) : "",
-          ].join(" ")
-        : "";
-  return /no such container|no such object/i.test(message);
+  return /no such container|no such object/i.test(getErrorMessage(error));
 }
 
 function wait(milliseconds: number): Promise<void> {
