@@ -7,6 +7,7 @@ remote MongoDB server without installing Mongo Express yourself or configuring i
 
 - Save and manage multiple MongoDB connections from the extension home page.
 - Connect using a hostname and optional credentials or a MongoDB connection string.
+- Test connection settings before saving, with a success message or the reason for failure.
 - Configure TLS with a custom CA and client certificate/key PEM files.
 - Limit Mongo Express to one database with database-scoped mode.
 - Open Mongo Express for a saved connection and remove its container when you return to the connections page.
@@ -33,13 +34,15 @@ you provide the MongoDB server and any credentials it requires.
 1. Open **Mongo Express** from the **Extensions** section in Docker Desktop.
 2. Select **Add connection** and enter a **Connection name**, such as `Local development`.
 3. Choose **Host and credentials** to enter a **Hostname**, **Port** (usually `27017`), and optional username/password. Choose **Connection string** to paste a `mongodb://` or `mongodb+srv://` URI instead.
-4. If needed, configure **Database-scoped mode** or **TLS settings** as described below.
+4. If needed, configure **Database-scoped mode** or **TLS settings** as described below. Select **Test connection** to check the settings and see a success message or the reason for failure.
 5. Select **Add connection** to save the details, then select **Open** in the connections table.
 6. Wait for **Starting Mongo Express…** to finish. The first launch may take longer while Docker downloads the Mongo Express image.
 7. In Mongo Express, select a database and collection to browse documents. Your MongoDB account permissions determine which read and write operations are available.
 8. Select **Connections** at the top to end the session and return to your saved connections.
 
-Saving a connection does not test it or start a container. The extension connects when you select **Open**.
+Saving a connection only stores its settings. **Test connection** connects and pings MongoDB using a
+temporary container that is removed afterward. **Open** starts Mongo Express using the saved settings.
+The first test or session may take longer while Docker downloads the Mongo Express image.
 
 ### Choose a MongoDB address
 
@@ -73,7 +76,7 @@ for options such as `authSource` and replica set settings.
 ### Manage saved connections
 
 - **Open** starts a Mongo Express session using the saved settings.
-- The **pencil icon** opens **Edit connection**. Update the fields and select **Save changes**.
+- The **pencil icon** opens **Edit connection**. Update the fields, optionally select **Test connection** to check them, and select **Save changes**.
 - The **trash icon** opens a confirmation dialog. Select **Delete** to remove the saved connection.
 
 Returning with **Connections** stops and removes the session container while keeping your saved
@@ -114,12 +117,16 @@ client certificate:
 
 Use **Browse** or enter an absolute path on the Docker Desktop host. Docker Desktop must be able to
 access the files through its file sharing settings. The extension stores only their paths and mounts
-the selected files read-only into Mongo Express. Save the connection, then open it to apply the settings.
-Close and reopen the connection after renewing or replacing certificates.
+the selected files read-only into Mongo Express. Use **Test connection** to check the TLS settings
+before saving. Save the connection, then open it to apply the settings. Close and reopen the connection
+after renewing or replacing certificates.
 
 Enabled TLS settings override the certificate paths and verification options in the URI. When disabled, no certificate files are mounted and TLS follows the URI, including the default TLS behavior of `mongodb+srv://`.
 
 ### Troubleshooting
+
+If **Test connection** fails, the modal shows the reason. Correct the settings and test again;
+changing a field clears the previous result.
 
 If **Service Unavailable** appears, read the error message. Select **Back to connections** to edit the
 saved settings, or **Try again** to retry with the same settings after fixing the problem.

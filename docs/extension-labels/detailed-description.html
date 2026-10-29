@@ -7,6 +7,7 @@
 <ul>
   <li>Save, edit, and manage multiple MongoDB connections.</li>
   <li>Connect using a hostname and optional credentials or a MongoDB connection string.</li>
+  <li>Test connection settings before saving, with a success message or the reason for failure.</li>
   <li>Configure TLS with a custom CA and client certificate/key PEM files.</li>
   <li>Limit Mongo Express to one database with database-scoped mode.</li>
   <li>
@@ -37,7 +38,8 @@
   </li>
   <li>
     If needed, configure <strong>Database-scoped mode</strong> or <strong>TLS settings</strong> as
-    described below.
+    described below. Select <strong>Test connection</strong> to check the settings and see a success
+    message or the reason for failure.
   </li>
   <li>
     Select <strong>Add connection</strong> to save the details, then select <strong>Open</strong> in
@@ -57,8 +59,10 @@
   </li>
 </ol>
 <p>
-  Saving a connection does not test it or start a container. The extension connects when you select
-  <strong>Open</strong>.
+  Saving a connection only stores its settings. <strong>Test connection</strong> connects and pings
+  MongoDB using a temporary container that is removed afterward. <strong>Open</strong> starts Mongo
+  Express using the saved settings. The first test or session may take longer while Docker downloads
+  the Mongo Express image.
 </p>
 <h3>Choose a MongoDB address</h3>
 <ul>
@@ -116,8 +120,9 @@
 <ul>
   <li><strong>Open</strong> starts a Mongo Express session using the saved settings.</li>
   <li>
-    The <strong>pencil icon</strong> opens <strong>Edit connection</strong>. Update the fields and
-    select <strong>Save changes</strong>.
+    The <strong>pencil icon</strong> opens <strong>Edit connection</strong>. Update the fields,
+    optionally select <strong>Test connection</strong> to check them, and select
+    <strong>Save changes</strong>.
   </li>
   <li>
     The <strong>trash icon</strong> opens a confirmation dialog. Select <strong>Delete</strong> to
@@ -185,7 +190,8 @@
 <p>
   Use <strong>Browse</strong> or enter an absolute path on the Docker Desktop host. Docker Desktop
   must be able to access the files through its file sharing settings. The extension stores only
-  their paths and mounts the selected files read-only into Mongo Express. Save the connection, then
+  their paths and mounts the selected files read-only into Mongo Express. Use
+  <strong>Test connection</strong> to check the TLS settings before saving. Save the connection, then
   open it to apply the settings. Close and reopen the connection after renewing or replacing
   certificates.
 </p>
@@ -195,6 +201,10 @@
   behavior of <code>mongodb+srv://</code>.
 </p>
 <h3>Troubleshooting</h3>
+<p>
+  If <strong>Test connection</strong> fails, the modal shows the reason. Correct the settings and
+  test again; changing a field clears the previous result.
+</p>
 <p>
   If <strong>Service Unavailable</strong> appears, read the error message. Select
   <strong>Back to connections</strong> to edit the saved settings, or <strong>Try again</strong> to

@@ -8,6 +8,75 @@ const MONGO_EXPRESS_PORT = 8081;
 const OWNER_LABEL = "com.saniewski.mongo-express-docker-extension";
 const CONNECTION_LABEL = `${OWNER_LABEL}.connection-id`;
 const CONNECTION_SUCCESSFUL_MESSAGE = "Mongo Express server listening";
+const CONNECTION_TEST_SUCCESSFUL_MESSAGE = "MONGO_CONNECTION_TEST_OK";
+
+// Use the image's MongoDB driver without starting the Mongo Express web server.
+const CONNECTION_TEST_SCRIPT = `
+const { MongoClient } = require("mongodb");
+let client;
+const timeout = setTimeout(() => {
+  console.error("The connection test timed out after 15 seconds.");
+  process.exit(1);
+}, 15000);
+(async () => {
+  try {
+    client = new MongoClient(process.env.ME_CONFIG_MONGODB_URL, {
+      serverSelectionTimeoutMS: 10000,
+      connectTimeoutMS: 10000,
+      socketTimeoutMS: 10000,
+    });
+    await client.connect();
+    await client.db().command({ ping: 1 });
+    console.log("${CONNECTION_TEST_SUCCESSFUL_MESSAGE}");
+  } catch (error) {
+    console.error(error.message || String(error));
+    process.exitCode = 1;
+  } finally {
+    await client?.close();
+    clearTimeout(timeout);
+  }
+})();
+`;
+
+/** Connects and pings MongoDB using a temporary container, without saving the connection. */
+export async function testMongoConnection(
+  connection: Omit<MongoConnection, "id" | "name">,
+): Promise<void> {
+  const config = buildMongoConfig(connection);
+  const target = await resolveMongoTarget(config.url);
+  const containerName = `dd-ext-mongo-express-test-${crypto.randomUUID()}`;
+  const args = [
+    "run",
+    "--rm",
+    "--name",
+    containerName,
+    "--label",
+    `${OWNER_LABEL}=true`,
+    "--entrypoint",
+    "node",
+    "-e",
+    `ME_CONFIG_MONGODB_URL=${target.url}`,
+  ];
+  for (const mount of config.mounts) args.push("--mount", mount);
+  if (target.network) args.push("--network", target.network);
+  args.push(MONGO_EXPRESS_IMAGE, "-e", CONNECTION_TEST_SCRIPT);
+
+  try {
+    const result = await runDocker(args);
+    // SDK responses may omit the exit code; require confirmation from the database check.
+    if (!result.stdout.split(/\r?\n/).includes(CONNECTION_TEST_SUCCESSFUL_MESSAGE)) {
+      throw new Error(getErrorMessage(result, "The connection test ended without a result."));
+    }
+  } catch (error) {
+    const message = getErrorMessage(error);
+    throw new Error(getTlsStartupError(message) ?? message, { cause: error });
+  } finally {
+    // Also remove containers left behind if Docker failed before the process could start.
+    await removeContainer(containerName).catch((error: unknown) => {
+      console.error("Failed to remove connection test container", getErrorMessage(error));
+    });
+  }
+}
 
 /**
  * Starts an isolated Mongo Express container for a connection and returns its host port.
