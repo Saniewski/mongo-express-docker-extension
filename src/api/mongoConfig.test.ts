@@ -35,6 +35,40 @@ test("host-and-credentials scope selects a database while preserving admin authe
   expect(config.url).toBe("mongodb://user:p%40ss@db:27017/app?authSource=admin");
 });
 
+test.each([undefined, false])(
+  "host-and-credentials connections retain discovery when direct connection is %s",
+  (directConnection) => {
+    expect(buildMongoConfig({ authMethod: "basic", hostname: "db", directConnection }).url).toBe(
+      "mongodb://db:27017",
+    );
+  },
+);
+
+test.each([
+  [{}, "mongodb://db:27017/?directConnection=true"],
+  [{ databaseScoped: true, databaseName: "app" }, "mongodb://db:27017/app?directConnection=true"],
+  [
+    { databaseScoped: true, databaseName: "app", username: "user", password: "p@ss" },
+    "mongodb://user:p%40ss@db:27017/app?authSource=admin&directConnection=true",
+  ],
+])("direct host connections preserve database and authentication settings: %j", (settings, url) => {
+  expect(
+    buildMongoConfig({
+      authMethod: "basic",
+      hostname: "db",
+      directConnection: true,
+      ...settings,
+    }).url,
+  ).toBe(url);
+});
+
+test("the host-mode direct connection setting does not override a connection string", () => {
+  const connectionString = "mongodb+srv://cluster.example/app";
+  expect(buildMongoConfig({ ...connection, connectionString, directConnection: true }).url).toBe(
+    connectionString,
+  );
+});
+
 test.each([
   "mongodb://db",
   "mongodb://db/?authSource=admin",

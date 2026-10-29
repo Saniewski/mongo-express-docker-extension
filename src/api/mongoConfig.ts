@@ -23,13 +23,16 @@ export function buildMongoConfig(connection: ConnectionSettings): {
       ? `${encodeURIComponent(connection.username)}:${encodeURIComponent(connection.password ?? "")}@`
       : "";
     url = `mongodb://${credentials}${hostname}:${port}`;
+    const query = new URLSearchParams();
     if (connection.databaseScoped) {
       const database = connection.databaseName?.trim() ?? "";
       validateDatabaseName(database);
       url += `/${encodeURIComponent(database)}`;
       // Host-and-credentials connections have always authenticated against admin.
-      if (credentials) url += "?authSource=admin";
+      if (credentials) query.set("authSource", "admin");
     }
+    if (connection.directConnection) query.set("directConnection", "true");
+    if (query.size) url += `${connection.databaseScoped ? "" : "/"}?${query}`;
   }
 
   const parsed = parseMongoUrl(url);

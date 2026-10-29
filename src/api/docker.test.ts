@@ -152,38 +152,46 @@ test("keeps the startup error if cleanup also fails", async () => {
   }
 });
 
-test("launches database-scoped TLS connections with read-only certificate mounts", async () => {
-  exec.mockImplementation(async (command) =>
-    command === "port" ? result("127.0.0.1:49152\n") : result(),
-  );
-  await expect(
-    startMongoExpress(
-      {
-        ...connection,
-        authMethod: "connectionString",
-        connectionString: "mongodb://localhost:27017/app?directConnection=true",
-        databaseScoped: true,
-        tls: { enabled: true, caFile: "/certs/ca.pem", certificateKeyFile: "/certs/client.pem" },
-      },
-      "launch",
-    ),
-  ).resolves.toBe(49152);
-  const args = exec.mock.calls.find(([command]) => command === "run")?.[1] ?? [];
-  expect(args).toContain("ME_CONFIG_MONGODB_ENABLE_ADMIN=false");
-  expect(args).toContain("ME_CONFIG_MONGODB_SSL=true");
-  expect(args.filter((arg) => arg === "--mount")).toHaveLength(2);
-  expect(args).toContain(
-    'type=bind,"source=/certs/client.pem",target=/etc/mongo-express/tls/client.pem,readonly',
-  );
-  const uri = new URL(
-    args
-      .find((arg) => arg.startsWith("ME_CONFIG_MONGODB_URL="))!
-      .split("ME_CONFIG_MONGODB_URL=")[1],
-  );
-  expect(uri.hostname).toBe("host.docker.internal");
-  expect(uri.pathname).toBe("/app");
-  expect(uri.searchParams.get("tlsCertificateKeyFile")).toBe("/etc/mongo-express/tls/client.pem");
-});
+test.each(["basic", "connectionString"] as const)(
+  "launches scoped TLS connections with %s",
+  async (authMethod) => {
+    exec.mockImplementation(async (command) =>
+      command === "port" ? result("127.0.0.1:49152\n") : result(),
+    );
+    await expect(
+      startMongoExpress(
+        {
+          ...connection,
+          authMethod,
+          username: "",
+          password: "",
+          directConnection: true,
+          databaseName: "app",
+          connectionString: "mongodb://localhost:27017/app?directConnection=true",
+          databaseScoped: true,
+          tls: { enabled: true, caFile: "/certs/ca.pem", certificateKeyFile: "/certs/client.pem" },
+        },
+        "launch",
+      ),
+    ).resolves.toBe(49152);
+    const args = exec.mock.calls.find(([command]) => command === "run")?.[1] ?? [];
+    expect(args).toContain("ME_CONFIG_MONGODB_ENABLE_ADMIN=false");
+    expect(args).toContain("ME_CONFIG_MONGODB_SSL=true");
+    expect(args.filter((arg) => arg === "--mount")).toHaveLength(2);
+    expect(args).toContain(
+      'type=bind,"source=/certs/client.pem",target=/etc/mongo-express/tls/client.pem,readonly',
+    );
+    const uri = new URL(
+      args
+        .find((arg) => arg.startsWith("ME_CONFIG_MONGODB_URL="))!
+        .split("ME_CONFIG_MONGODB_URL=")[1],
+    );
+    expect(uri.hostname).toBe("host.docker.internal");
+    expect(uri.pathname).toBe("/app");
+    expect(uri.searchParams.get("directConnection")).toBe("true");
+    expect(uri.searchParams.get("tlsCertificateKeyFile")).toBe("/etc/mongo-express/tls/client.pem");
+  },
+);
 
 test("invalid settings fail before any container is removed or created", async () => {
   await expect(
@@ -243,37 +251,44 @@ test.each([
   expect(exec).toHaveBeenLastCalledWith("rm", ["-f", expect.any(String)]);
 });
 
-test("tests scoped TLS settings on the MongoDB container's network", async () => {
-  exec.mockImplementation(async (command) => {
-    if (command === "ps") return result("database|mongo:9|app-network\n");
-    if (command === "run") return result("MONGO_CONNECTION_TEST_OK\n");
-    return result();
-  });
-  await testMongoConnection({
-    ...connection,
-    authMethod: "connectionString",
-    connectionString: "mongodb://user:password@database/app?authSource=admin&directConnection=true",
-    databaseScoped: true,
-    tls: { enabled: true, caFile: "/certs/ca.pem", certificateKeyFile: "/certs/client.pem" },
-  });
-  const args = exec.mock.calls.find(([command]) => command === "run")![1];
-  expect(args[args.indexOf("--network") + 1]).toBe("app-network");
-  expect(args.filter((arg) => arg === "--mount")).toHaveLength(2);
-  expect(args).toContain(
-    'type=bind,"source=/certs/client.pem",target=/etc/mongo-express/tls/client.pem,readonly',
-  );
-  const uri = new URL(
-    args
-      .find((arg) => arg.startsWith("ME_CONFIG_MONGODB_URL="))!
-      .split("ME_CONFIG_MONGODB_URL=")[1],
-  );
-  expect(uri.hostname).toBe("database");
-  expect(uri.pathname).toBe("/app");
-  expect(uri.searchParams.get("authSource")).toBe("admin");
-  expect(uri.searchParams.get("directConnection")).toBe("true");
-  expect(uri.searchParams.get("tls")).toBe("true");
-  expect(uri.searchParams.get("tlsCertificateKeyFile")).toBe("/etc/mongo-express/tls/client.pem");
-});
+test.each(["basic", "connectionString"] as const)(
+  "tests scoped TLS settings with %s on the MongoDB container's network",
+  async (authMethod) => {
+    exec.mockImplementation(async (command) => {
+      if (command === "ps") return result("database|mongo:9|app-network\n");
+      if (command === "run") return result("MONGO_CONNECTION_TEST_OK\n");
+      return result();
+    });
+    await testMongoConnection({
+      ...connection,
+      authMethod,
+      hostname: "database",
+      databaseName: "app",
+      directConnection: true,
+      connectionString:
+        "mongodb://user:password@database/app?authSource=admin&directConnection=true",
+      databaseScoped: true,
+      tls: { enabled: true, caFile: "/certs/ca.pem", certificateKeyFile: "/certs/client.pem" },
+    });
+    const args = exec.mock.calls.find(([command]) => command === "run")![1];
+    expect(args[args.indexOf("--network") + 1]).toBe("app-network");
+    expect(args.filter((arg) => arg === "--mount")).toHaveLength(2);
+    expect(args).toContain(
+      'type=bind,"source=/certs/client.pem",target=/etc/mongo-express/tls/client.pem,readonly',
+    );
+    const uri = new URL(
+      args
+        .find((arg) => arg.startsWith("ME_CONFIG_MONGODB_URL="))!
+        .split("ME_CONFIG_MONGODB_URL=")[1],
+    );
+    expect(uri.hostname).toBe("database");
+    expect(uri.pathname).toBe("/app");
+    expect(uri.searchParams.get("authSource")).toBe("admin");
+    expect(uri.searchParams.get("directConnection")).toBe("true");
+    expect(uri.searchParams.get("tls")).toBe("true");
+    expect(uri.searchParams.get("tlsCertificateKeyFile")).toBe("/etc/mongo-express/tls/client.pem");
+  },
+);
 
 test("connection tests use unique containers without removing a saved session", async () => {
   exec.mockImplementation(async (command) =>
