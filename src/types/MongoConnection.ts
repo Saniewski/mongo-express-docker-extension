@@ -7,4 +7,12 @@ export type MongoConnection = {
   username?: string;
   password?: string;
   connectionString?: string;
+  databaseScoped?: boolean;
+  databaseName?: string;
+  tls?: {
+    enabled: boolean;
+    caFile?: string;
+    certificateKeyFile?: string;
+    allowInvalidHostnames?: boolean;
+  };
 };

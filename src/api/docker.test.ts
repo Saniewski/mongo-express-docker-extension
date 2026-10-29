@@ -50,6 +50,8 @@ test.each([undefined, 0])("starts with credentials when the SDK exit code is %s"
   );
   expect(args).toContain("127.0.0.1::8081");
   expect(args).toContain("ME_CONFIG_BASICAUTH=false");
+  expect(args).toContain("ME_CONFIG_MONGODB_ENABLE_ADMIN=true");
+  expect(args).toContain("ME_CONFIG_MONGODB_SSL=false");
   expect(exec.mock.calls.filter(([command]) => command === "rm")).toHaveLength(1);
 });
 
@@ -143,4 +145,57 @@ test("keeps the startup error if cleanup also fails", async () => {
   } finally {
     cleanupError.mockRestore();
   }
+});
+
+test("launches database-scoped TLS connections with read-only certificate mounts", async () => {
+  exec.mockImplementation(async (command) =>
+    command === "port" ? result("127.0.0.1:49152\n") : result(),
+  );
+  await expect(
+    startMongoExpress(
+      {
+        ...connection,
+        authMethod: "connectionString",
+        connectionString: "mongodb://localhost:27017/app?directConnection=true",
+        databaseScoped: true,
+        tls: { enabled: true, caFile: "/certs/ca.pem", certificateKeyFile: "/certs/client.pem" },
+      },
+      "launch",
+    ),
+  ).resolves.toBe(49152);
+  const args = exec.mock.calls.find(([command]) => command === "run")?.[1] ?? [];
+  expect(args).toContain("ME_CONFIG_MONGODB_ENABLE_ADMIN=false");
+  expect(args).toContain("ME_CONFIG_MONGODB_SSL=true");
+  expect(args.filter((arg) => arg === "--mount")).toHaveLength(2);
+  expect(args).toContain(
+    'type=bind,"source=/certs/client.pem",target=/etc/mongo-express/tls/client.pem,readonly',
+  );
+  const uri = new URL(
+    args
+      .find((arg) => arg.startsWith("ME_CONFIG_MONGODB_URL="))!
+      .split("ME_CONFIG_MONGODB_URL=")[1],
+  );
+  expect(uri.hostname).toBe("host.docker.internal");
+  expect(uri.pathname).toBe("/app");
+  expect(uri.searchParams.get("tlsCertificateKeyFile")).toBe("/etc/mongo-express/tls/client.pem");
+});
+
+test("invalid settings fail before any container is removed or created", async () => {
+  await expect(
+    startMongoExpress({ ...connection, databaseScoped: true }, "launch"),
+  ).rejects.toThrow(/requires a database name/);
+  expect(exec).not.toHaveBeenCalled();
+});
+
+test.each([
+  ["MongoServerSelectionError: certificate has expired", /certificate has expired/],
+  ["ERR_TLS_CERT_ALTNAME_INVALID", /does not match/],
+  ["ENOENT /etc/mongo-express/tls/client.pem", /could not be read/],
+  ["unable to verify the first certificate", /not trusted/],
+  ["ERR_OSSL_PEM_NO_START_LINE", /PEM file is invalid/],
+])("reports actionable TLS startup errors: %s", async (logs, message) => {
+  exec.mockImplementation(async (command) =>
+    command === "inspect" ? result("exited\n") : result(logs),
+  );
+  await expect(checkMongoExpress(connection.id, "launch")).rejects.toThrow(message);
 });

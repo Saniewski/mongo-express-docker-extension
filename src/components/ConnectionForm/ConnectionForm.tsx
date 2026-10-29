@@ -1,17 +1,23 @@
 import { FormEvent, useState } from "react";
 import {
+  Alert,
   Button,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
+  Divider,
   FormControlLabel,
   Radio,
   RadioGroup,
   Stack,
+  Switch,
   TextField,
+  Typography,
 } from "@mui/material";
 import { MongoConnection } from "../../types/MongoConnection";
+import { getConnectionSettingsError } from "../../api/mongoConfig";
+import { CertificateFileField } from "./CertificateFileField";
 
 type ConnectionFormProps = {
   open: boolean;
@@ -28,6 +34,9 @@ const emptyConnection: Omit<MongoConnection, "id"> = {
   username: "",
   password: "",
   connectionString: "mongodb://localhost:27017",
+  databaseScoped: false,
+  databaseName: "",
+  tls: { enabled: false },
 };
 
 export const ConnectionForm = ({ open, connection, onClose, onSave }: ConnectionFormProps) => {
@@ -41,15 +50,22 @@ export const ConnectionForm = ({ open, connection, onClose, onSave }: Connection
           username: connection.username,
           password: connection.password,
           connectionString: connection.connectionString,
+          databaseScoped: connection.databaseScoped ?? false,
+          databaseName: connection.databaseName ?? "",
+          tls: { ...connection.tls, enabled: connection.tls?.enabled ?? false },
         }
       : { ...emptyConnection },
   );
 
-  const canSave =
-    form.name.trim().length > 0 &&
-    (form.authMethod === "basic"
-      ? !!form.hostname?.trim() && Number(form.port) > 0 && Number(form.port) <= 65535
-      : isValidConnectionString(form.connectionString ?? ""));
+  const settingsError = getConnectionSettingsError(form);
+  const canSave = form.name.trim().length > 0 && !settingsError;
+
+  const updateTls = (settings: Partial<NonNullable<MongoConnection["tls"]>>) => {
+    setForm((current) => ({
+      ...current,
+      tls: { enabled: false, ...current.tls, ...settings },
+    }));
+  };
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -61,12 +77,22 @@ export const ConnectionForm = ({ open, connection, onClose, onSave }: Connection
       port: Number(form.port) || 27017,
       hostname: form.hostname?.trim(),
       connectionString: form.connectionString?.trim(),
+      databaseName: form.databaseName?.trim(),
+      tls: {
+        enabled: form.tls?.enabled ?? false,
+        caFile: form.tls?.caFile?.trim(),
+        certificateKeyFile: form.tls?.certificateKeyFile?.trim(),
+        allowInvalidHostnames: form.tls?.allowInvalidHostnames ?? false,
+      },
     });
   };
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
-      <form onSubmit={handleSubmit}>
+      <form
+        onSubmit={handleSubmit}
+        style={{ display: "flex", flexDirection: "column", minHeight: 0 }}
+      >
         <DialogTitle>{connection ? "Edit connection" : "Add MongoDB connection"}</DialogTitle>
         <DialogContent>
           <Stack spacing={2} sx={{ pt: 1 }}>
@@ -133,14 +159,93 @@ export const ConnectionForm = ({ open, connection, onClose, onSave }: Connection
                 required
                 label="MongoDB connection string"
                 placeholder="mongodb://user:password@host:27017/database"
-                error={
-                  !!form.connectionString?.trim() && !isValidConnectionString(form.connectionString)
+                helperText={
+                  form.databaseScoped
+                    ? "Include the database name, for example mongodb://host:27017/app."
+                    : "Use a mongodb:// or mongodb+srv:// connection string."
                 }
-                helperText="Use a valid mongodb:// or mongodb+srv:// connection string."
                 value={form.connectionString ?? ""}
                 onChange={(event) => setForm({ ...form, connectionString: event.target.value })}
               />
             )}
+            <Divider />
+            <Stack spacing={1}>
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={form.databaseScoped ?? false}
+                    onChange={(event) => setForm({ ...form, databaseScoped: event.target.checked })}
+                  />
+                }
+                label="Database-scoped mode"
+              />
+              <Typography variant="body2" color="text.secondary">
+                Show only the selected database and disable admin features. Database permissions
+                still control read and write access.
+              </Typography>
+              {form.databaseScoped && form.authMethod === "basic" && (
+                <TextField
+                  required
+                  label="Database name"
+                  value={form.databaseName ?? ""}
+                  onChange={(event) => setForm({ ...form, databaseName: event.target.value })}
+                  helperText={
+                    form.username
+                      ? "Credentials authenticate against admin. Use a connection string for another authentication database."
+                      : undefined
+                  }
+                />
+              )}
+            </Stack>
+            <Divider />
+            <Stack spacing={2}>
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={form.tls?.enabled ?? false}
+                    onChange={(event) => updateTls({ enabled: event.target.checked })}
+                  />
+                }
+                label="TLS settings"
+              />
+              <Typography variant="body2" color="text.secondary">
+                {form.tls?.enabled
+                  ? "TLS is enabled. These settings override certificate and verification options in the connection string. Certificate files stay on your computer and are shared read-only."
+                  : "Enable to configure certificates. Otherwise, TLS follows your connection string."}
+              </Typography>
+              {form.tls?.enabled && (
+                <>
+                  <CertificateFileField
+                    label="CA certificate (optional)"
+                    value={form.tls.caFile ?? ""}
+                    helperText="PEM file for your certificate authority. Leave empty to use the container's trusted authorities."
+                    onChange={(caFile) => updateTls({ caFile })}
+                  />
+                  <CertificateFileField
+                    label="Client certificate/key (optional)"
+                    value={form.tls.certificateKeyFile ?? ""}
+                    helperText="One PEM file containing the client certificate and private key. Only its path is saved."
+                    onChange={(certificateKeyFile) => updateTls({ certificateKeyFile })}
+                  />
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        checked={form.tls.allowInvalidHostnames ?? false}
+                        onChange={(event) =>
+                          updateTls({ allowInvalidHostnames: event.target.checked })
+                        }
+                      />
+                    }
+                    label="Allow certificate hostname mismatch"
+                  />
+                  <Typography variant="body2" color="text.secondary">
+                    Use only for a trusted local proxy whose certificate names the remote server.
+                    Certificate authority verification remains enabled.
+                  </Typography>
+                </>
+              )}
+            </Stack>
+            {settingsError && <Alert severity="error">{settingsError}</Alert>}
           </Stack>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
@@ -153,14 +258,3 @@ export const ConnectionForm = ({ open, connection, onClose, onSave }: Connection
     </Dialog>
   );
 };
-
-function isValidConnectionString(value: string): boolean {
-  try {
-    const parsed = new URL(value.trim());
-    return (
-      (parsed.protocol === "mongodb:" || parsed.protocol === "mongodb+srv:") && !!parsed.hostname
-    );
-  } catch {
-    return false;
-  }
-}
