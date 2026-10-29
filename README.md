@@ -83,6 +83,11 @@ with the connection. In **Connection string** mode, set `directConnection=true` 
 - The **pencil icon** opens **Edit connection**. Update the fields, optionally select **Test connection** to check them, and select **Save changes**.
 - The **trash icon** opens a confirmation dialog. Select **Delete** to remove the saved connection.
 
+**Test connection** checks the read permissions needed by the selected mode: listing collections in
+the selected database, or listing databases and their collections and reading server status in admin
+mode. It does not write data or verify write permissions. Opening a connection also checks that the
+Mongo Express home page responds before displaying it.
+
 Returning with **Connections** stops and removes the session container while keeping your saved
 connection. Containers left behind by an interrupted session are cleaned up when the connections page
 next opens. Closing or deleting a saved connection does not remove your MongoDB server or its data.
@@ -94,7 +99,7 @@ no longer need, and avoid saving secrets on a shared desktop account.
 ### Database-scoped mode
 
 Enable **Database-scoped mode** when you want Mongo Express to show one database, including when your
-account cannot list all databases:
+account cannot list all databases or read server status:
 
 - With **Host and credentials**, fill in **Database name**, for example `app`.
 - With **Connection string**, include the database in the URI path, for example `mongodb://host.docker.internal:27017/app`.
@@ -145,6 +150,19 @@ saved settings, or **Try again** to retry with the same settings after fixing th
 
 If the problem persists, select **Report an issue** on the error page and include the error message
 with any credentials removed.
+
+#### Atlas X.509 authentication
+
+For Atlas X.509 authentication, select the downloaded PEM in **Client certificate/key**, leave
+**CA certificate** empty and **Allow certificate hostname mismatch** off, and use:
+
+```text
+mongodb+srv://cluster.example.mongodb.net/?authMechanism=MONGODB-X509&authSource=%24external
+```
+
+Selecting a certificate does not select the authentication mechanism. If the user cannot read server
+status, enable **Database-scoped mode** and add your database name after the hostname, keeping the
+authentication options above. Mongo Express admin mode requires the `serverStatus` permission.
 
 ## Development
 

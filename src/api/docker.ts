@@ -2,43 +2,20 @@ import { dockerExec } from "./dockerCli";
 import { getErrorMessage } from "./errors";
 import { MongoConnection } from "../types/MongoConnection";
 import { buildMongoConfig } from "./mongoConfig";
+import {
+  CONNECTION_TEST_SCRIPT,
+  CONNECTION_TEST_SUCCESSFUL_MESSAGE,
+  HTTP_CHECK_SCRIPT,
+  HTTP_SUCCESSFUL_MESSAGE,
+} from "./mongoScripts";
 
 const MONGO_EXPRESS_IMAGE = "mongo-express:latest";
 const MONGO_EXPRESS_PORT = 8081;
 const OWNER_LABEL = "com.saniewski.mongo-express-docker-extension";
 const CONNECTION_LABEL = `${OWNER_LABEL}.connection-id`;
 const CONNECTION_SUCCESSFUL_MESSAGE = "Mongo Express server listening";
-const CONNECTION_TEST_SUCCESSFUL_MESSAGE = "MONGO_CONNECTION_TEST_OK";
 
-// Use the image's MongoDB driver without starting the Mongo Express web server.
-const CONNECTION_TEST_SCRIPT = `
-const { MongoClient } = require("mongodb");
-let client;
-const timeout = setTimeout(() => {
-  console.error("The connection test timed out after 15 seconds.");
-  process.exit(1);
-}, 15000);
-(async () => {
-  try {
-    client = new MongoClient(process.env.ME_CONFIG_MONGODB_URL, {
-      serverSelectionTimeoutMS: 10000,
-      connectTimeoutMS: 10000,
-      socketTimeoutMS: 10000,
-    });
-    await client.connect();
-    await client.db().command({ ping: 1 });
-    console.log("${CONNECTION_TEST_SUCCESSFUL_MESSAGE}");
-  } catch (error) {
-    console.error(error.message || String(error));
-    process.exitCode = 1;
-  } finally {
-    await client?.close();
-    clearTimeout(timeout);
-  }
-})();
-`;
-
-/** Connects and pings MongoDB using a temporary container, without saving the connection. */
+/** Checks the selected mode's MongoDB permissions without saving the connection or writing data. */
 export async function testMongoConnection(
   connection: Omit<MongoConnection, "id" | "name">,
 ): Promise<void> {
@@ -56,6 +33,10 @@ export async function testMongoConnection(
     "node",
     "-e",
     `ME_CONFIG_MONGODB_URL=${target.url}`,
+    "-e",
+    `ME_CONFIG_MONGODB_ENABLE_ADMIN=${!connection.databaseScoped}`,
+    "-e",
+    `ME_CONFIG_MONGODB_SSL=${config.tls}`,
   ];
   for (const mount of config.mounts) args.push("--mount", mount);
   if (target.network) args.push("--network", target.network);
@@ -69,7 +50,7 @@ export async function testMongoConnection(
     }
   } catch (error) {
     const message = getErrorMessage(error);
-    throw new Error(getTlsStartupError(message) ?? message, { cause: error });
+    throw new Error(getMongoStartupError(message) ?? message, { cause: error });
   } finally {
     // Also remove containers left behind if Docker failed before the process could start.
     await removeContainer(containerName).catch((error: unknown) => {
@@ -150,15 +131,31 @@ export async function checkMongoExpress(
   const status = inspect.stdout?.trim().toLowerCase();
   if (status === "exited" || status === "dead") {
     const logs = await dockerExec("logs", ["--tail", "100", containerName]);
-    const tlsError = getTlsStartupError(`${logs.stdout}\n${logs.stderr}`);
-    if (tlsError) throw new Error(tlsError);
+    const startupError = getMongoStartupError(`${logs.stdout}\n${logs.stderr}`);
+    if (startupError) throw new Error(startupError);
     return "exited";
   }
   if (status !== "running") return null;
 
-  const logs = await dockerExec("logs", [containerName]);
+  const logs = await dockerExec("logs", ["--tail", "100", containerName]);
   const output = `${logs.stdout}\n${logs.stderr}`;
-  return output.includes(CONNECTION_SUCCESSFUL_MESSAGE) ? "up" : null;
+  if (!output.includes(CONNECTION_SUCCESSFUL_MESSAGE)) return null;
+
+  const response = await dockerExec("exec", [containerName, "node", "-e", HTTP_CHECK_SCRIPT]);
+  if (
+    (response.code === undefined || response.code === 0) &&
+    response.stdout.split(/\r?\n/).includes(HTTP_SUCCESSFUL_MESSAGE)
+  ) {
+    return "up";
+  }
+
+  // Some Mongo Express routes log MongoDB failures but leave the HTTP request unanswered.
+  // Read logs after the request to show the cause before the failed container is removed.
+  const failedLogs = await dockerExec("logs", ["--tail", "100", containerName]);
+  throw new Error(
+    getMongoStartupError(`${failedLogs.stdout}\n${failedLogs.stderr}`) ??
+      getErrorMessage(response, "Mongo Express could not load its home page."),
+  );
 }
 
 /** Stops and removes the Mongo Express container owned by a saved connection. */
@@ -327,7 +324,19 @@ function isMissingContainerError(error: unknown): boolean {
   return /no such container|no such object/i.test(getErrorMessage(error));
 }
 
-function getTlsStartupError(logs: string): string | undefined {
+function getMongoStartupError(logs: string): string | undefined {
+  if (/requires authentication|command .* needs authentication/i.test(logs)) {
+    return "MongoDB requires authentication. Check the credentials and authSource. For a client certificate, add authMechanism=MONGODB-X509&authSource=%24external to the connection string.";
+  }
+  if (/authentication failed|bad auth|unable to authenticate/i.test(logs)) {
+    return "MongoDB authentication failed. Check the credentials or certificate and the connection string's authMechanism and authSource.";
+  }
+  if (/not authorized|unauthorized|not allowed to do action/i.test(logs)) {
+    if (/serverStatus/i.test(logs)) {
+      return "This MongoDB user cannot read server status, which Mongo Express needs in admin mode. Enable Database-scoped mode and include /database in the URI, or use an account with the serverStatus permission.";
+    }
+    return "MongoDB denied access to databases or collections. Check authentication and database roles. For X.509, set authMechanism=MONGODB-X509&authSource=%24external. If access is limited to one database, enable Database-scoped mode.";
+  }
   if (/certificate has expired|CERT_HAS_EXPIRED/i.test(logs)) {
     return "A TLS certificate has expired. Renew the certificate or log in to your database proxy again.";
   }
@@ -343,6 +352,8 @@ function getTlsStartupError(logs: string): string | undefined {
   if (/PEM routines|ERR_OSSL_PEM|bad decrypt|key values mismatch/i.test(logs)) {
     return "A TLS PEM file is invalid or its private key cannot be read. Check that the client PEM contains both the certificate and its matching private key.";
   }
+  const mongoError = logs.match(/^\s*(Mongo\w*Error: .+)$/m)?.[1];
+  if (mongoError) return getErrorMessage(mongoError).slice(0, 1000);
 }
 
 function wait(milliseconds: number): Promise<void> {

@@ -76,7 +76,7 @@ export const ConnectionForm = ({ open, connection, onClose, onSave }: Connection
     setTestResult(undefined);
     try {
       await testMongoConnection(form);
-      setTestResult({ form, severity: "success", message: "Connection successful." });
+      setTestResult({ form, severity: "success", message: "Connection successful" });
     } catch (error) {
       setTestResult({
         form,
@@ -194,8 +194,8 @@ export const ConnectionForm = ({ open, connection, onClose, onSave }: Connection
                     label="Direct connection"
                   />
                   <Typography variant="body2" color="text.secondary">
-                    Connect only to the specified host and port, without automatically
-                    discovering other servers.
+                    Connect only to the specified host and port, without automatically discovering
+                    other servers.
                   </Typography>
                 </Stack>
               </>
@@ -225,8 +225,8 @@ export const ConnectionForm = ({ open, connection, onClose, onSave }: Connection
                 label="Database-scoped mode"
               />
               <Typography variant="body2" color="text.secondary">
-                Show only the selected database and disable admin features. Database permissions
-                still control read and write access.
+                Show only the selected database and disable admin features. Use this when your
+                account cannot list all databases or read server status.
               </Typography>
               {form.databaseScoped && form.authMethod === "basic" && (
                 <TextField
@@ -269,7 +269,7 @@ export const ConnectionForm = ({ open, connection, onClose, onSave }: Connection
                   <CertificateFileField
                     label="Client certificate/key (optional)"
                     value={form.tls.certificateKeyFile ?? ""}
-                    helperText="One PEM file containing the client certificate and private key. Only its path is saved."
+                    helperText="One PEM file containing the client certificate and private key. For X.509 authentication, also set authMechanism=MONGODB-X509&authSource=%24external in the connection string."
                     onChange={(certificateKeyFile) => updateTls({ certificateKeyFile })}
                   />
                   <FormControlLabel
