@@ -8,17 +8,21 @@ import {
   DialogTitle,
   Divider,
   FormControlLabel,
+  IconButton,
   Radio,
   RadioGroup,
   Stack,
   Switch,
   TextField,
+  Tooltip,
   Typography,
 } from "@mui/material";
+import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
 import { MongoConnection } from "../../types/MongoConnection";
 import { getConnectionSettingsError } from "../../api/mongoConfig";
 import { testMongoConnection } from "../../api/docker";
 import { getErrorMessage } from "../../api/errors";
+import { ddClient } from "../../api/utils";
 import { CertificateFileField } from "./CertificateFileField";
 
 type ConnectionFormProps = {
@@ -121,7 +125,25 @@ export const ConnectionForm = ({ open, connection, onClose, onSave }: Connection
         onSubmit={handleSubmit}
         style={{ display: "flex", flexDirection: "column", minHeight: 0 }}
       >
-        <DialogTitle>{connection ? "Edit connection" : "Add MongoDB connection"}</DialogTitle>
+        <DialogTitle
+          sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}
+        >
+          {connection ? "Edit connection" : "Add MongoDB connection"}
+          <Tooltip title="Open Usage guide in browser">
+            <IconButton
+              type="button"
+              size="small"
+              aria-label="Open Usage guide in browser"
+              onClick={() =>
+                ddClient.host.openExternal(
+                  "https://github.com/Saniewski/mongo-express-docker-extension#usage",
+                )
+              }
+            >
+              <HelpOutlineIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+        </DialogTitle>
         <DialogContent>
           <Stack spacing={2} sx={{ pt: 1 }}>
             <TextField
