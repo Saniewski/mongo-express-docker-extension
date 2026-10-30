@@ -32,8 +32,8 @@ you provide the MongoDB server and any credentials it requires.
 ### Open your first connection
 
 1. Open **Mongo Express** from the **Extensions** section in Docker Desktop.
-2. Select **Add connection** and enter a **Connection name**, such as `Local development`.
-3. Choose **Host and credentials** to enter a **Hostname**, **Port** (usually `27017`), and optional username/password. Choose **Connection string** to paste a `mongodb://` or `mongodb+srv://` URI instead.
+2. Select **Add connection** and enter a **Connection name**, such as `Local development`. This required field is the display label for the saved connection.
+3. Choose **Host and credentials** to enter a **Hostname**, **Port** (an integer from `1` to `65535`, default `27017`), and optional username/password. Choose **Connection string** to paste a `mongodb://` or `mongodb+srv://` URI instead.
 4. If needed, configure **Database-scoped mode** or **TLS settings** as described below. Select **Test connection** to check the settings and see a success message or the reason for failure.
 5. Select **Add connection** to save the details, then select **Open** in the connections table.
 6. Wait for **Starting Mongo Express…** to finish. The first launch may take longer while Docker downloads the Mongo Express image.
@@ -103,6 +103,9 @@ account cannot list all databases or read server status:
 
 - With **Host and credentials**, fill in **Database name**, for example `app`.
 - With **Connection string**, include the database in the URI path, for example `mongodb://host.docker.internal:27017/app`.
+
+A database name is required in either mode. It must be shorter than 64 bytes in UTF-8 and cannot
+contain whitespace, dots, slashes, backslashes, double quotes, dollar signs, or null characters.
 
 This disables Mongo Express's admin features and limits browsing to that database. MongoDB still
 enforces the account's read/write permissions. The mode is off by default; adding a database to a URI
