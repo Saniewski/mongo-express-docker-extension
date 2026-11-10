@@ -1,8 +1,10 @@
 IMAGE?=saniewski/mongo-express-docker-extension
-TAG_LATEST?=latest
-TAG_MAJOR?=1
-TAG_MINOR?=1.0
-TAG_PATCH?=1.0.2
+VERSION?=2.0.0
+RELEASE_TAGS?=latest major minor patch
+
+VERSION_MAJOR = $(word 1,$(subst ., ,$(VERSION)))
+VERSION_MINOR = $(VERSION_MAJOR).$(word 2,$(subst ., ,$(VERSION)))
+IMAGE_TAG_ARGS = $(foreach tag,$(RELEASE_TAGS),--tag=$(IMAGE):$(if $(filter latest,$(tag)),latest,$(if $(filter major,$(tag)),$(VERSION_MAJOR),$(if $(filter minor,$(tag)),$(VERSION_MINOR),$(if $(filter patch,$(tag)),$(VERSION))))))
 
 BUILDER=buildx-multi-arch
 
@@ -16,10 +18,7 @@ SCREENSHOTS = $(shell cat ./docs/extension-labels/screenshots.json)
 
 build-extension: ## Build service image to be deployed as a desktop extension
 	docker build \
-		--tag=$(IMAGE):$(TAG_LATEST) \
-		--tag=$(IMAGE):$(TAG_MAJOR) \
-		--tag=$(IMAGE):$(TAG_MINOR) \
-		--tag=$(IMAGE):$(TAG_PATCH) \
+		$(IMAGE_TAG_ARGS) \
 		--build-arg ADDITIONAL_URLS='$(ADDITIONAL_URLS)' \
 		--build-arg CHANGELOG='$(CHANGELOG)' \
 		--build-arg DETAILED_DESCRIPTION='$(DETAILED_DESCRIPTION)' \
@@ -27,10 +26,10 @@ build-extension: ## Build service image to be deployed as a desktop extension
 		.
 
 install-extension: build-extension ## Install the extension
-	docker extension install $(IMAGE):$(TAG_PATCH)
+	docker extension install $(IMAGE):$(VERSION)
 
 update-extension: build-extension ## Update the extension
-	docker extension update $(IMAGE):$(TAG_PATCH)
+	docker extension update $(IMAGE):$(VERSION)
 
 use-devtools: ## Use DevTools inside the Docker Desktop extension
 	docker extension dev debug ${IMAGE}
@@ -46,10 +45,7 @@ prepare-buildx: ## Create buildx builder for multi-arch build, if not exists
 
 push-extension: prepare-buildx ## Build & upload extension image to hub.
 	docker buildx build --push --builder=$(BUILDER) --platform=linux/amd64,linux/arm64 \
-		--tag=$(IMAGE):$(TAG_LATEST) \
-		--tag=$(IMAGE):$(TAG_MAJOR) \
-		--tag=$(IMAGE):$(TAG_MINOR) \
-		--tag=$(IMAGE):$(TAG_PATCH) \
+		$(IMAGE_TAG_ARGS) \
 		--build-arg ADDITIONAL_URLS='$(ADDITIONAL_URLS)' \
 		--build-arg CHANGELOG='$(CHANGELOG)' \
 		--build-arg DETAILED_DESCRIPTION='$(DETAILED_DESCRIPTION)' \
