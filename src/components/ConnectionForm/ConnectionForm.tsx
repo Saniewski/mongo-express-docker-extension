@@ -129,11 +129,11 @@ export const ConnectionForm = ({ open, connection, onClose, onSave }: Connection
           sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}
         >
           {connection ? "Edit connection" : "Add MongoDB connection"}
-          <Tooltip title="Open Usage guide in browser">
+          <Tooltip title="Open usage guide in browser">
             <IconButton
               type="button"
               size="small"
-              aria-label="Open Usage guide in browser"
+              aria-label="Open usage guide in browser"
               onClick={() =>
                 ddClient.host.openExternal(
                   "https://github.com/Saniewski/mongo-express-docker-extension#usage",
