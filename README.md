@@ -16,12 +16,12 @@ remote MongoDB server without installing Mongo Express yourself or configuring i
 
 Start Docker Desktop with Extensions enabled, then install the extension from the marketplace:
 
-https://open.docker.com/extensions/marketplace?extensionId=saniewski/mongo-express-docker-extension&tag=1.0.2
+https://open.docker.com/extensions/marketplace?extensionId=saniewski/mongo-express-docker-extension&tag=2.0.0
 
 Or install it manually:
 
 ```bash
-docker extension install saniewski/mongo-express-docker-extension:1.0.2
+docker extension install saniewski/mongo-express-docker-extension:2.0.0
 ```
 
 ## Usage
@@ -166,6 +166,11 @@ mongodb+srv://cluster.example.mongodb.net/?authMechanism=MONGODB-X509&authSource
 Selecting a certificate does not select the authentication mechanism. If the user cannot read server
 status, enable **Database-scoped mode** and add your database name after the hostname, keeping the
 authentication options above. Mongo Express admin mode requires the `serverStatus` permission.
+
+## Support and license
+
+For help or to report a problem, [open an issue](https://github.com/Saniewski/mongo-express-docker-extension/issues).
+This project is licensed under the [MIT License](LICENSE).
 
 ## Development
 
