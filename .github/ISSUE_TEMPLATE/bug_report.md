@@ -1,31 +1,30 @@
 ---
 name: Bug report
-about: Create a report to help us improve
-title: ""
+about: Report a problem with the extension
 labels: bug
-assignees: ""
 ---
 
-**Bug description**
-A clear and concise description of what the bug is.
+**What happened?**
+
+<!-- A clear and concise description of what happened. -->
 
 **Steps to reproduce**
 
+<!--
 1. Go to '...'
 2. Click on '....'
-3. Scroll down to '....'
-4. See error
+3. See error
+-->
 
-**Expected behavior**
-A clear and concise description of what you expected to happen.
+**What did you expect to happen?**
 
-**Screenshots**
-If applicable, add screenshots to help explain your problem.
+<!-- A clear and concise description of what you expected to happen. -->
 
-**Environment (please complete the following information):**
+**Environment**
 
-- Extension Version: [e.g. v1.0.0]
-- Docker Desktop Version: [e.g. v4.15.0]
+- Extension version: <!-- [e.g. v1.0.0] -->
+- Docker Desktop version: <!--[e.g. v4.15.0] -->
 
 **Additional context**
-Add any other context about the problem here.
+
+<!-- Screenshots or error messages, if helpful. -->
