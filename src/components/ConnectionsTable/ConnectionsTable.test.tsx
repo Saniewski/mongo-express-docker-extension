@@ -40,16 +40,21 @@ test("shows connection endpoints and authentication types without exposing URI c
     "Configured MongoDB connections",
   ]);
   const text = findElements(tree, TableCell)
-    .flatMap((cell) => [cell.props.children, isValidElement(cell.props.children) ? cell.props.children.props.children : null])
+    .flatMap((cell) => [
+      cell.props.children,
+      isValidElement(cell.props.children) ? cell.props.children.props.children : null,
+    ])
     .filter((child) => typeof child === "string");
-  expect(text).toEqual(expect.arrayContaining([
-    "Local database",
-    "localhost:27017",
-    "Host and credentials",
-    "Remote cluster",
-    "db.example:27018",
-    "Connection string",
-  ]));
+  expect(text).toEqual(
+    expect.arrayContaining([
+      "Local database",
+      "localhost:27017",
+      "Host and credentials",
+      "Remote cluster",
+      "db.example:27018",
+      "Connection string",
+    ]),
+  );
   expect(JSON.stringify(tree)).not.toContain("secret");
 });
 
@@ -64,13 +69,19 @@ test("disables opening while preparing and routes each row action to its connect
     onEdit,
     onDelete,
   });
-  const openButtons = findElements(tree, Button).filter((button) => button.props.children === "Open");
+  const openButtons = findElements(tree, Button).filter(
+    (button) => button.props.children === "Open",
+  );
   expect(openButtons).toHaveLength(2);
   expect(openButtons.every((button) => button.props.disabled)).toBe(true);
   openButtons[0].props.onClick();
 
-  findElements(tree, IconButton).find((button) => button.props["aria-label"] === "Edit Local database")!.props.onClick();
-  findElements(tree, IconButton).find((button) => button.props["aria-label"] === "Delete Remote cluster")!.props.onClick();
+  findElements(tree, IconButton)
+    .find((button) => button.props["aria-label"] === "Edit Local database")!
+    .props.onClick();
+  findElements(tree, IconButton)
+    .find((button) => button.props["aria-label"] === "Delete Remote cluster")!
+    .props.onClick();
 
   expect(onOpen).toHaveBeenCalledWith(basic);
   expect(onEdit).toHaveBeenCalledWith(basic);
@@ -79,7 +90,13 @@ test("disables opening while preparing and routes each row action to its connect
 });
 
 test("renders an empty table when there are no connections", () => {
-  const tree = ConnectionsTable({ connections: [], isPreparing: false, onOpen: jest.fn(), onEdit: jest.fn(), onDelete: jest.fn() });
+  const tree = ConnectionsTable({
+    connections: [],
+    isPreparing: false,
+    onOpen: jest.fn(),
+    onEdit: jest.fn(),
+    onDelete: jest.fn(),
+  });
 
   expect(findElements(tree, TableBody)[0].props.children).toEqual([]);
 });

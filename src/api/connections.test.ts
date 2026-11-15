@@ -74,7 +74,7 @@ test("gets connection endpoints without exposing credentials or database names",
       port: 27017,
     }),
   ).toBe("localhost:27017");
-  expect(
-    getConnectionEndpoint({ id: "bad", name: "Bad", authMethod: "connectionString" }),
-  ).toBe("Invalid connection string");
+  expect(getConnectionEndpoint({ id: "bad", name: "Bad", authMethod: "connectionString" })).toBe(
+    "Invalid connection string",
+  );
 });

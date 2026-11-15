@@ -18,7 +18,11 @@ jest.mock("../api/utils", () => ({ ddToast: { error: jest.fn(), success: jest.fn
 jest.mock("../components/ExtensionHeader/ExtensionHeader", () => ({ ExtensionHeader: () => null }));
 jest.mock("../components/ExtensionFooter/ExtensionFooter", () => ({ ExtensionFooter: () => null }));
 jest.mock("../components/ConnectionsTable/ConnectionsTable", () => ({
-  ConnectionsTable: ({ connections }: { connections: { name: string; hostname?: string; port?: number }[] }) =>
+  ConnectionsTable: ({
+    connections,
+  }: {
+    connections: { name: string; hostname?: string; port?: number }[];
+  }) =>
     React.createElement(
       "div",
       null,

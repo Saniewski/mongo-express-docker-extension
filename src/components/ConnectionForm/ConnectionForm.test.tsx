@@ -38,10 +38,17 @@ beforeEach(() => {
   jest.clearAllMocks();
   useStateMock.mockImplementation((initial: unknown) => {
     const index = cursor++;
-    if (!(index in state)) state[index] = typeof initial === "function" ? (initial as () => unknown)() : initial;
-    return [state[index], (value: unknown) => {
-      state[index] = typeof value === "function" ? (value as (previous: unknown) => unknown)(state[index]) : value;
-    }];
+    if (!(index in state))
+      state[index] = typeof initial === "function" ? (initial as () => unknown)() : initial;
+    return [
+      state[index],
+      (value: unknown) => {
+        state[index] =
+          typeof value === "function"
+            ? (value as (previous: unknown) => unknown)(state[index])
+            : value;
+      },
+    ];
   });
 });
 
@@ -57,7 +64,9 @@ test("starts with basic connection fields and prevents saving a blank name", () 
     "Username (optional)",
     "Password (optional)",
   ]);
-  expect(findElements(tree, Button).find((button) => button.props.type === "submit")?.props.disabled).toBe(true);
+  expect(
+    findElements(tree, Button).find((button) => button.props.type === "submit")?.props.disabled,
+  ).toBe(true);
 });
 
 test("submits a trimmed connection and preserves its id when editing", () => {
@@ -75,19 +84,28 @@ test("submits a trimmed connection and preserves its id when editing", () => {
   const onSave = jest.fn();
   const props = { open: true, connection, onClose: jest.fn(), onSave };
   let tree = render(props);
-  const name = findElements(tree, TextField).find((field) => field.props.label === "Connection name")!;
+  const name = findElements(tree, TextField).find(
+    (field) => field.props.label === "Connection name",
+  )!;
   name.props.onChange({ target: { value: "  Production  " } });
   tree = render(props);
   const form = findElements(tree, "form")[0];
   form.props.onSubmit({ preventDefault: jest.fn() });
 
-  expect(onSave).toHaveBeenCalledWith(expect.objectContaining({
-    id: "existing-id",
-    name: "Production",
-    hostname: "db.example",
-    port: 27018,
-    tls: { enabled: false, caFile: undefined, certificateKeyFile: undefined, allowInvalidHostnames: false },
-  }));
+  expect(onSave).toHaveBeenCalledWith(
+    expect.objectContaining({
+      id: "existing-id",
+      name: "Production",
+      hostname: "db.example",
+      port: 27018,
+      tls: {
+        enabled: false,
+        caFile: undefined,
+        certificateKeyFile: undefined,
+        allowInvalidHostnames: false,
+      },
+    }),
+  );
 });
 
 test("reveals connection-string fields and disables save for invalid settings", () => {
@@ -96,25 +114,45 @@ test("reveals connection-string fields and disables save for invalid settings", 
   const radioGroup = findElements(tree, RadioGroup)[0];
   radioGroup.props.onChange({ target: { value: "connectionString" } });
   tree = render(props);
-  expect(findElements(tree, TextField).some((field) => field.props.label === "MongoDB connection string")).toBe(true);
+  expect(
+    findElements(tree, TextField).some(
+      (field) => field.props.label === "MongoDB connection string",
+    ),
+  ).toBe(true);
 
-  const stringField = findElements(tree, TextField).find((field) => field.props.label === "MongoDB connection string")!;
+  const stringField = findElements(tree, TextField).find(
+    (field) => field.props.label === "MongoDB connection string",
+  )!;
   stringField.props.onChange({ target: { value: "not-a-mongodb-url" } });
   tree = render(props);
-  expect(findElements(tree, Alert).some((alert) => String(alert.props.children).includes("valid mongodb://"))).toBe(true);
-  expect(findElements(tree, Button).find((button) => button.props.type === "submit")?.props.disabled).toBe(true);
+  expect(
+    findElements(tree, Alert).some((alert) =>
+      String(alert.props.children).includes("valid mongodb://"),
+    ),
+  ).toBe(true);
+  expect(
+    findElements(tree, Button).find((button) => button.props.type === "submit")?.props.disabled,
+  ).toBe(true);
 });
 
 test("tests a connection and displays failures; opens the usage guide", async () => {
   const props = { open: true, onClose: jest.fn(), onSave: jest.fn() };
   let tree = render(props);
-  const testButton = findElements(tree, Button).find((button) => button.props.children === "Test connection")!;
+  const testButton = findElements(tree, Button).find(
+    (button) => button.props.children === "Test connection",
+  )!;
   testConnection.mockRejectedValue(new Error("refused"));
   await testButton.props.onClick();
   tree = render(props);
-  expect(findElements(tree, Alert).map((alert) => alert.props.children)).toContain("Connection failed: refused");
+  expect(findElements(tree, Alert).map((alert) => alert.props.children)).toContain(
+    "Connection failed: refused",
+  );
 
-  const helpButton = findElements(tree, IconButton).find((button) => button.props["aria-label"] === "Open usage guide in browser")!;
+  const helpButton = findElements(tree, IconButton).find(
+    (button) => button.props["aria-label"] === "Open usage guide in browser",
+  )!;
   helpButton.props.onClick();
-  expect(ddClient.host.openExternal).toHaveBeenCalledWith("https://github.com/Saniewski/mongo-express-docker-extension#usage");
+  expect(ddClient.host.openExternal).toHaveBeenCalledWith(
+    "https://github.com/Saniewski/mongo-express-docker-extension#usage",
+  );
 });

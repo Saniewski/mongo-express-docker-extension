@@ -7,7 +7,7 @@ jest.mock("@mui/material", () => {
   return {
     ...actual,
     Dialog: ({ open, children }: { open: boolean; children: React.ReactNode }) =>
-      (open ? children : null),
+      open ? children : null,
   };
 });
 

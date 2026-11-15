@@ -48,7 +48,12 @@ test("renders the controlled certificate path field and forwards edits", () => {
 
 test("browses for the selected file and ignores canceled or empty results", async () => {
   const onChange = jest.fn();
-  const tree = CertificateFileField({ label: "CA certificate", value: "", helperText: "", onChange });
+  const tree = CertificateFileField({
+    label: "CA certificate",
+    value: "",
+    helperText: "",
+    onChange,
+  });
   const browse = findElements(tree, Button)[0].props.onClick as () => Promise<void>;
 
   showOpenDialog.mockResolvedValue({ canceled: false, filePaths: ["/certs/ca.pem"] });
