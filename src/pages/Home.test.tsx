@@ -1,5 +1,7 @@
+/** @jest-environment jsdom */
+
 import React from "react";
-import { renderToStaticMarkup } from "react-dom/server";
+import { render, waitFor } from "@testing-library/react";
 import { HomePage } from "./Home";
 import { loadConnections } from "../api/connections";
 import { cleanupMongoExpressContainers } from "../api/docker";
@@ -50,19 +52,26 @@ beforeEach(() => {
 });
 
 test("shows cleanup progress and disables adding connections while preparing", () => {
-  const html = renderToStaticMarkup(<HomePage />);
+  const { container } = render(<HomePage />);
 
-  expect(html).toContain("Cleaning up containers from the previous session");
-  expect(html).toContain('disabled=""');
+  expect(container.textContent).toContain("Cleaning up containers from the previous session");
+  expect(container.querySelector("button")?.hasAttribute("disabled")).toBe(true);
 });
 
 test("shows the empty state before cleanup has completed", () => {
   jest.mocked(cleanupMongoExpressContainers).mockImplementation(() => new Promise(() => {}));
 
-  const html = renderToStaticMarkup(<HomePage />);
+  const { container } = render(<HomePage />);
 
-  expect(html).toContain("Cleaning up containers from the previous session");
-  expect(html).not.toContain("No connections yet.");
+  expect(container.textContent).toContain("Cleaning up containers from the previous session");
+  expect(container.textContent).not.toContain("No connections yet.");
+});
+
+test("runs cleanup on mount and shows the empty state after cleanup completes", async () => {
+  render(<HomePage />);
+
+  expect(cleanupMongoExpressContainers).toHaveBeenCalledTimes(1);
+  await waitFor(() => expect(document.body.textContent).toContain("No connections yet."));
 });
 
 test("loads saved connections to initialize the page", () => {
@@ -75,7 +84,7 @@ test("loads saved connections to initialize the page", () => {
     },
   ]);
 
-  renderToStaticMarkup(<HomePage />);
+  render(<HomePage />);
 
   expect(loadConnections).toHaveBeenCalledTimes(1);
 });
