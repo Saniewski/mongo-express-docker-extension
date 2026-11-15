@@ -1,4 +1,4 @@
-import React, { Children, isValidElement, type ReactElement, type ReactNode } from "react";
+import { Children, isValidElement, type ReactElement, type ReactNode } from "react";
 import { Button, IconButton, Table, TableBody, TableCell } from "@mui/material";
 import type { MongoConnection } from "../../types/MongoConnection";
 import { ConnectionsTable } from "./ConnectionsTable";
