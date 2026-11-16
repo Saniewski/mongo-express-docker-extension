@@ -1,26 +1,34 @@
 [
   {
-    "alt": "Login Page - Basic 1",
-    "url": "https://raw.githubusercontent.com/Saniewski/mongo-express-docker-extension/main/docs/screenshots/01-login-page-basic-1.png"
+    "alt": "Mongo Express extension home page",
+    "url": "https://raw.githubusercontent.com/Saniewski/mongo-express-docker-extension/main/docs/screenshots/01-home-page.png"
   },
   {
-    "alt": "Login Page - Basic 2",
-    "url": "https://raw.githubusercontent.com/Saniewski/mongo-express-docker-extension/main/docs/screenshots/02-login-page-basic-2.png"
+    "alt": "Add a MongoDB connection",
+    "url": "https://raw.githubusercontent.com/Saniewski/mongo-express-docker-extension/main/docs/screenshots/02-add-connection.png"
   },
   {
-    "alt": "Login Page - Connection String",
-    "url": "https://raw.githubusercontent.com/Saniewski/mongo-express-docker-extension/main/docs/screenshots/03-login-page-connection-string.png"
+    "alt": "MongoDB Atlas connection settings",
+    "url": "https://raw.githubusercontent.com/Saniewski/mongo-express-docker-extension/main/docs/screenshots/03-mongodb-atlas-connection-1.png"
   },
   {
-    "alt": "Loading Mongo Express",
-    "url": "https://raw.githubusercontent.com/Saniewski/mongo-express-docker-extension/main/docs/screenshots/04-loading-mongo-express.png"
+    "alt": "MongoDB Atlas connection settings with TLS options",
+    "url": "https://raw.githubusercontent.com/Saniewski/mongo-express-docker-extension/main/docs/screenshots/04-mongodb-atlas-connection-2.png"
   },
   {
-    "alt": "Mongo Express Dashboard",
-    "url": "https://raw.githubusercontent.com/Saniewski/mongo-express-docker-extension/main/docs/screenshots/05-mongo-express-dashboard.png"
+    "alt": "Saved MongoDB connections",
+    "url": "https://raw.githubusercontent.com/Saniewski/mongo-express-docker-extension/main/docs/screenshots/05-connections-list.png"
   },
   {
-    "alt": "Service Unavailable",
-    "url": "https://raw.githubusercontent.com/Saniewski/mongo-express-docker-extension/main/docs/screenshots/06-service-unavailable.png"
+    "alt": "Mongo Express starting",
+    "url": "https://raw.githubusercontent.com/Saniewski/mongo-express-docker-extension/main/docs/screenshots/06-loading-mongo-express.png"
+  },
+  {
+    "alt": "Mongo Express dashboard",
+    "url": "https://raw.githubusercontent.com/Saniewski/mongo-express-docker-extension/main/docs/screenshots/07-mongo-express-dashboard.png"
+  },
+  {
+    "alt": "Mongo Express service unavailable page",
+    "url": "https://raw.githubusercontent.com/Saniewski/mongo-express-docker-extension/main/docs/screenshots/08-service-unavailable.png"
   }
 ]
