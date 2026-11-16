@@ -16,12 +16,12 @@ remote MongoDB server without installing Mongo Express yourself or configuring i
 
 Start Docker Desktop with Extensions enabled, then install the extension from the marketplace:
 
-https://open.docker.com/extensions/marketplace?extensionId=saniewski/mongo-express-docker-extension&tag=2.0.0
+https://open.docker.com/extensions/marketplace?extensionId=saniewski/mongo-express-docker-extension&tag=2.0.2
 
 Or install it manually:
 
 ```bash
-docker extension install saniewski/mongo-express-docker-extension:2.0.0
+docker extension install saniewski/mongo-express-docker-extension:2.0.2
 ```
 
 ## Usage

@@ -1,5 +1,5 @@
 IMAGE?=saniewski/mongo-express-docker-extension
-VERSION?=2.0.0
+VERSION?=2.0.2
 RELEASE_TAGS?=latest major minor patch
 
 VERSION_MAJOR = $(word 1,$(subst ., ,$(VERSION)))
