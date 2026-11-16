@@ -218,3 +218,21 @@ pnpm format:check
 
 The build checks both the application and `vite.config.ts` types before bundling. To check types
 without producing a build, run `pnpm typecheck`.
+
+## Screenshots
+
+![Mongo Express extension home page](https://raw.githubusercontent.com/Saniewski/mongo-express-docker-extension/main/docs/screenshots/01-home-page.png)
+
+![Add a MongoDB connection](https://raw.githubusercontent.com/Saniewski/mongo-express-docker-extension/main/docs/screenshots/02-add-connection.png)
+
+![MongoDB Atlas connection settings](https://raw.githubusercontent.com/Saniewski/mongo-express-docker-extension/main/docs/screenshots/03-mongodb-atlas-connection-1.png)
+
+![MongoDB Atlas connection settings with TLS options](https://raw.githubusercontent.com/Saniewski/mongo-express-docker-extension/main/docs/screenshots/04-mongodb-atlas-connection-2.png)
+
+![Saved MongoDB connections](https://raw.githubusercontent.com/Saniewski/mongo-express-docker-extension/main/docs/screenshots/05-connections-list.png)
+
+![Mongo Express starting](https://raw.githubusercontent.com/Saniewski/mongo-express-docker-extension/main/docs/screenshots/06-loading-mongo-express.png)
+
+![Mongo Express dashboard](https://raw.githubusercontent.com/Saniewski/mongo-express-docker-extension/main/docs/screenshots/07-mongo-express-dashboard.png)
+
+![Mongo Express service unavailable page](https://raw.githubusercontent.com/Saniewski/mongo-express-docker-extension/main/docs/screenshots/08-service-unavailable.png)
